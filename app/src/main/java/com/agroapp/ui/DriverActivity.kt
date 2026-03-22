@@ -32,7 +32,6 @@ class DriverActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_driver)
 
-        // Verificar que el usuario sea repartidor
         val userType = SessionManager.getUserType()
         if (userType != "driver") {
             Toast.makeText(this, "No tienes permisos de repartidor", Toast.LENGTH_LONG).show()
@@ -49,8 +48,6 @@ class DriverActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        // Título Grün en blanco
         supportActionBar?.title = "Grün"
         supportActionBar?.setDisplayShowTitleEnabled(true)
         toolbar.setTitleTextColor(resources.getColor(android.R.color.white, theme))
@@ -61,10 +58,15 @@ class DriverActivity : AppCompatActivity() {
             toolbar.setSubtitleTextColor(resources.getColor(android.R.color.white, theme))
         }
 
-        // Configurar adapters para paquetes
-        availablePackagesAdapter = AvailablePackagesAdapter { packageItem ->
-            showTakePackageDialog(packageItem)
-        }
+        // FIX: pasar los dos parámetros que requiere AvailablePackagesAdapter
+        availablePackagesAdapter = AvailablePackagesAdapter(
+            onTakeClick = { packageItem ->
+                showTakePackageDialog(packageItem)
+            },
+            onOrderStatusChange = { orderId, newStatus, photoUri ->
+                viewModel.updateOrderStatus(orderId, newStatus)
+            }
+        )
 
         myPackagesAdapter = MyPackagesAdapter()
 
@@ -80,34 +82,23 @@ class DriverActivity : AppCompatActivity() {
     }
 
     private fun setupObservers() {
-        // Loading
         viewModel.loading.observe(this, Observer { isLoading ->
             findViewById<ProgressBar>(R.id.progressBar).visibility =
                 if (isLoading) View.VISIBLE else View.GONE
         })
 
-        // Paquetes disponibles
         viewModel.availablePackages.observe(this, Observer { packages ->
-            if (packages != null) {
-                availablePackagesAdapter.submitList(packages)
-            }
+            if (packages != null) availablePackagesAdapter.submitList(packages)
         })
 
-        // Mis paquetes tomados
         viewModel.myPackages.observe(this, Observer { packages ->
-            if (packages != null) {
-                myPackagesAdapter.submitList(packages)
-            }
+            if (packages != null) myPackagesAdapter.submitList(packages)
         })
 
-        // Ganancias por paquetes
         viewModel.packageEarnings.observe(this, Observer { earnings ->
-            if (earnings != null) {
-                updateEarningsUI(earnings)
-            }
+            if (earnings != null) updateEarningsUI(earnings)
         })
 
-        // Estado de tomar paquete
         viewModel.takePackageState.observe(this, Observer { state ->
             when (state) {
                 is TakePackageState.Loading -> {
@@ -167,7 +158,6 @@ class DriverActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvTotalDeliveries).text =
             earnings.total_orders.toString()
 
-        // Calcular próximo viernes
         val today = LocalDate.now()
         val daysUntilFriday = (5 - today.dayOfWeek.value).let { if (it <= 0) it + 7 else it }
         val nextFriday = today.plusDays(daysUntilFriday.toLong())
@@ -177,7 +167,7 @@ class DriverActivity : AppCompatActivity() {
     }
 
     private fun showTakePackageDialog(packageItem: com.agroapp.model.DynamicPackage) {
-        val totalPayment = packageItem.current_size * 1.25 // $1.25 por pedido
+        val totalPayment = packageItem.current_size * 1.25
         val driverPayment = totalPayment * 0.90
 
         androidx.appcompat.app.AlertDialog.Builder(this)

@@ -11,6 +11,7 @@ import com.agroapp.model.DynamicPackage
 import com.agroapp.model.DriverPackageEarnings
 import com.agroapp.model.TakeBlockRequest
 import com.agroapp.model.TakePackageRequest
+import com.agroapp.model.UpdateStatusRequest
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import kotlinx.coroutines.launch
@@ -19,39 +20,30 @@ class DriverViewModel : ViewModel() {
 
     private val api = RetrofitClient.instance
 
-    // Bloques disponibles (viejo sistema)
     private val _availableBlocks = MutableLiveData<List<DeliveryBlock>>()
     val availableBlocks: LiveData<List<DeliveryBlock>> = _availableBlocks
 
-    // Mis bloques asignados (viejo sistema)
     private val _myBlocks = MutableLiveData<List<DriverBlock>>()
     val myBlocks: LiveData<List<DriverBlock>> = _myBlocks
 
-    // Ganancias (viejo sistema)
     private val _earnings = MutableLiveData<DriverEarnings?>()
     val earnings: LiveData<DriverEarnings?> = _earnings
 
-    // Paquetes disponibles (nuevo sistema)
     private val _availablePackages = MutableLiveData<List<DynamicPackage>>()
     val availablePackages: LiveData<List<DynamicPackage>> = _availablePackages
 
-    // Mis paquetes tomados (nuevo sistema)
     private val _myPackages = MutableLiveData<List<DynamicPackage>>()
     val myPackages: LiveData<List<DynamicPackage>> = _myPackages
 
-    // Ganancias por paquetes (nuevo sistema)
     private val _packageEarnings = MutableLiveData<DriverPackageEarnings?>()
     val packageEarnings: LiveData<DriverPackageEarnings?> = _packageEarnings
 
-    // Loading state
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
 
-    // Acción de tomar bloque
     private val _takeBlockState = MutableLiveData<TakeBlockState?>()
     val takeBlockState: LiveData<TakeBlockState?> = _takeBlockState
 
-    // Acción de tomar paquete
     private val _takePackageState = MutableLiveData<TakePackageState?>()
     val takePackageState: LiveData<TakePackageState?> = _takePackageState
 
@@ -64,19 +56,15 @@ class DriverViewModel : ViewModel() {
         loadPackageEarnings()
     }
 
-    // ==================== MÉTODOS PARA BLOQUES (VIEJO) ====================
+    // ==================== BLOQUES (VIEJO) ====================
 
     fun loadAvailableBlocks() {
         viewModelScope.launch {
             _loading.value = true
             try {
                 val response = api.getAvailableBlocks(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _availableBlocks.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _availableBlocks.value = response.body()
+            } catch (e: Exception) { }
             _loading.value = false
         }
     }
@@ -86,12 +74,8 @@ class DriverViewModel : ViewModel() {
             _loading.value = true
             try {
                 val response = api.getMyBlocks(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _myBlocks.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _myBlocks.value = response.body()
+            } catch (e: Exception) { }
             _loading.value = false
         }
     }
@@ -100,12 +84,8 @@ class DriverViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = api.getDriverEarnings(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _earnings.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _earnings.value = response.body()
+            } catch (e: Exception) { }
         }
     }
 
@@ -127,23 +107,17 @@ class DriverViewModel : ViewModel() {
         }
     }
 
-    fun resetTakeBlockState() {
-        _takeBlockState.value = null
-    }
+    fun resetTakeBlockState() { _takeBlockState.value = null }
 
-    // ==================== MÉTODOS PARA PAQUETES (NUEVO) ====================
+    // ==================== PAQUETES (NUEVO) ====================
 
     fun loadAvailablePackages() {
         viewModelScope.launch {
             _loading.value = true
             try {
                 val response = api.getAvailablePackages(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _availablePackages.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _availablePackages.value = response.body()
+            } catch (e: Exception) { }
             _loading.value = false
         }
     }
@@ -153,12 +127,8 @@ class DriverViewModel : ViewModel() {
             _loading.value = true
             try {
                 val response = api.getMyPackages(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _myPackages.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _myPackages.value = response.body()
+            } catch (e: Exception) { }
             _loading.value = false
         }
     }
@@ -167,12 +137,8 @@ class DriverViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = api.getDriverPackageEarnings(SessionManager.getToken())
-                if (response.isSuccessful) {
-                    _packageEarnings.value = response.body()
-                }
-            } catch (e: Exception) {
-                // Error
-            }
+                if (response.isSuccessful) _packageEarnings.value = response.body()
+            } catch (e: Exception) { }
         }
     }
 
@@ -200,8 +166,20 @@ class DriverViewModel : ViewModel() {
         }
     }
 
-    fun resetTakePackageState() {
-        _takePackageState.value = null
+    fun resetTakePackageState() { _takePackageState.value = null }
+
+    // ✅ NUEVO: actualizar estado de un pedido dentro de un paquete
+    fun updateOrderStatus(orderId: String, newStatus: String) {
+        viewModelScope.launch {
+            try {
+                api.updateOrderStatus(
+                    SessionManager.getToken(),
+                    orderId,
+                    UpdateStatusRequest(newStatus)
+                )
+                loadMyPackages()
+            } catch (e: Exception) { }
+        }
     }
 }
 
