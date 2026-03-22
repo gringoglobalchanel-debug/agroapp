@@ -36,11 +36,14 @@ class CartActivity : AppCompatActivity() {
     private var pendingYappiCode: String? = null
     private var pendingTotal: Double = 0.0
 
+    companion object {
+        const val DELIVERY_FEE = 2.50
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
 
-        // Inicializar vistas
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         val rvCartItems = findViewById<RecyclerView>(R.id.rvCartItems)
         val tvTotal = findViewById<TextView>(R.id.tvTotal)
@@ -49,16 +52,13 @@ class CartActivity : AppCompatActivity() {
         val rgPaymentMethod = findViewById<RadioGroup>(R.id.rgPaymentMethod)
         val btnConfirmOrder = findViewById<Button>(R.id.btnConfirmOrder)
 
-        // Configurar Stripe
         PaymentConfiguration.init(this, "pk_test_51TCsa5BLWgq8LL5oSzSEf91oRnuyWGUUUhLtsA4dH4ZZC3LgqquMV4F63yg2GJ94wVqFaZWAPACC8xYHuQEHTGBY00qafIlQAu")
         paymentSheet = PaymentSheet(this, ::onPaymentSheetResult)
 
-        // Configurar toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.title = "Mi Carrito"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Configurar adaptador
         adapter = CartAdapter(
             cartItems = emptyMap(),
             onQuantityChange = { product, newQuantity ->
@@ -71,12 +71,10 @@ class CartActivity : AppCompatActivity() {
         rvCartItems.layoutManager = LinearLayoutManager(this)
         rvCartItems.adapter = adapter
 
-        // Observar cambios en el carrito
         productViewModel.cart.observe(this, Observer { cartMap ->
             updateCartUI(cartMap ?: emptyMap(), tvTotal, tvEmpty, rvCartItems)
         })
 
-        // Botón confirmar pedido
         btnConfirmOrder.setOnClickListener {
             val paymentMethod = when (rgPaymentMethod.checkedRadioButtonId) {
                 R.id.rbYappi -> "yappi"
@@ -101,7 +99,6 @@ class CartActivity : AppCompatActivity() {
             }
         }
 
-        // Observar estado del pedido
         orderViewModel.orderState.observe(this, Observer { state ->
             when (state) {
                 is OrderState.Loading -> {
@@ -135,16 +132,26 @@ class CartActivity : AppCompatActivity() {
         })
     }
 
-    private fun processCardPayment() {
+    // Calcula el subtotal de productos sin envío
+    private fun getProductsTotal(): Double {
         val cartItems = productViewModel.getCartItemsMap()
-        val total = cartItems.entries.sumOf { it.key.price * it.value }
+        return cartItems.entries.sumOf { it.key.price * it.value }
+    }
 
-        if (total <= 0) {
+    // Calcula el total final incluyendo envío
+    private fun getFinalTotal(): Double = getProductsTotal() + DELIVERY_FEE
+
+    private fun processCardPayment() {
+        val productsTotal = getProductsTotal()
+
+        if (productsTotal <= 0) {
             Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show()
             return
         }
 
-        orderViewModel.createPaymentIntent(total) { success, secret ->
+        val finalTotal = getFinalTotal()
+
+        orderViewModel.createPaymentIntent(finalTotal) { success, secret ->
             if (success && secret != null) {
                 clientSecret = secret
                 presentPaymentSheet()
@@ -155,21 +162,20 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun processYappiPayment() {
-        val cartItems = productViewModel.getCartItemsMap()
-        val total = cartItems.entries.sumOf { it.key.price * it.value }
+        val productsTotal = getProductsTotal()
 
-        if (total <= 0) {
+        if (productsTotal <= 0) {
             Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show()
             return
         }
 
-        pendingTotal = total
+        val finalTotal = getFinalTotal()
+        pendingTotal = finalTotal
 
-        // Mostrar progreso
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
 
-        // Crear pedido pendiente con código de referencia
+        val cartItems = productViewModel.getCartItemsMap()
         val deliveryAddress = SessionManager.getAddress()
         orderViewModel.createPendingYappiOrder(cartItems, deliveryAddress) { success, orderId, referenceCode ->
             progressBar.visibility = View.GONE
@@ -177,9 +183,7 @@ class CartActivity : AppCompatActivity() {
             if (success && orderId != null && referenceCode != null) {
                 pendingYappiOrderId = orderId
                 pendingYappiCode = referenceCode
-
-                // Mostrar diálogo con instrucciones y código de referencia
-                showYappiPaymentDialog(total, referenceCode, orderId)
+                showYappiPaymentDialog(finalTotal, referenceCode, orderId)
             } else {
                 Toast.makeText(this, "Error al procesar el pedido. Intenta de nuevo.", Toast.LENGTH_LONG).show()
             }
@@ -187,7 +191,8 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun showYappiPaymentDialog(total: Double, referenceCode: String, orderId: String) {
-        val yappiPhone = "50760000000"  // ← CAMBIA AQUÍ TU NÚMERO DE YAPPI
+        val yappiPhone = "50760000000"
+        val productsTotal = total - DELIVERY_FEE
 
         AlertDialog.Builder(this)
             .setTitle("Pagar con YAPPI")
@@ -195,7 +200,9 @@ class CartActivity : AppCompatActivity() {
                 Por favor, realiza el pago con YAPPI:
                 
                 📱 Número: $yappiPhone
-                💰 Monto: $${"%.2f".format(total)}
+                🛒 Productos: $${"%.2f".format(productsTotal)}
+                🚚 Envío: $${"%.2f".format(DELIVERY_FEE)}
+                💰 Total: $${"%.2f".format(total)}
                 📝 Referencia: $referenceCode
                 
                 Luego presiona "YA PAGUÉ" para confirmar tu pedido.
@@ -226,7 +233,6 @@ class CartActivity : AppCompatActivity() {
                 finish()
             } else {
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                // Mostrar diálogo para reintentar
                 showPaymentRetryDialog(orderId, referenceCode)
             }
         }
@@ -249,7 +255,7 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun openYappi(total: Double, referenceCode: String) {
-        val yappiPhone = "50765422618"  // ← CAMBIA AQUÍ TU NÚMERO DE YAPPI
+        val yappiPhone = "50765422618"
         val description = "Compra AgroApp - $referenceCode"
         val yappiUrl = "yappi://pay?phone=$yappiPhone&amount=${"%.2f".format(total)}&description=$description"
 
@@ -258,7 +264,6 @@ class CartActivity : AppCompatActivity() {
             startActivity(intent)
         } catch (e: Exception) {
             Toast.makeText(this, "Debes tener YAPPI instalado", Toast.LENGTH_SHORT).show()
-            // Abrir Play Store para descargar YAPPI
             try {
                 val playStore = Intent(Intent.ACTION_VIEW,
                     Uri.parse("market://details?id=com.banistmo.yappy"))
@@ -307,8 +312,9 @@ class CartActivity : AppCompatActivity() {
             rvCartItems.visibility = View.VISIBLE
             adapter.updateCart(cartMap)
 
-            val total = cartMap.entries.sumOf { it.key.price * it.value }
-            tvTotal.text = "Total: $${String.format("%.2f", total)}"
+            val productsTotal = cartMap.entries.sumOf { it.key.price * it.value }
+            val finalTotal = productsTotal + DELIVERY_FEE
+            tvTotal.text = "Productos: $${"%.2f".format(productsTotal)} + Envío: $${"%.2f".format(DELIVERY_FEE)} = Total: $${"%.2f".format(finalTotal)}"
         }
     }
 

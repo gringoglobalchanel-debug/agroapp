@@ -1,20 +1,27 @@
 package com.agroapp.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.DynamicPackage
+import com.agroapp.model.DynamicPackageOrder
+import java.io.File
 import java.text.NumberFormat
 import java.util.Locale
 
 class AvailablePackagesAdapter(
     private val onTakeClick: (DynamicPackage) -> Unit,
-    private val onOrderStatusChange: (String, String, String?) -> Unit // (orderId, newStatus, photoUri)
+    private val onOrderStatusChange: (String, String, String?) -> Unit
 ) : RecyclerView.Adapter<AvailablePackagesAdapter.ViewHolder>() {
 
     private var packages: List<DynamicPackage> = emptyList()
@@ -46,15 +53,15 @@ class AvailablePackagesAdapter(
 
         fun bind(packageItem: DynamicPackage) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-            val totalPayment = packageItem.current_size * 1.25
+            val pricePerOrder = 2.50
+            val totalPayment = packageItem.current_size * pricePerOrder
             val driverPayment = totalPayment * 0.90
 
             tvSize.text = "Paquete #${packageItem.id.takeLast(8)}"
-            tvOrders.text = "${packageItem.current_size} pedidos"
-            tvPayment.text = formatter.format(driverPayment)
+            tvOrders.text = "${packageItem.current_size}/${packageItem.max_size}"
+            tvPayment.text = "${formatter.format(driverPayment)} (${packageItem.current_size} × ${formatter.format(pricePerOrder * 0.90)})"
             tvCreatedAt.text = "Creado: ${formatDate(packageItem.created_at)}"
 
-            // Configurar el RecyclerView de pedidos dentro del paquete
             val ordersAdapter = PackageOrderAdapter(
                 orders = packageItem.orders ?: emptyList(),
                 onStatusChange = { orderId, newStatus, photoUri ->
@@ -81,11 +88,15 @@ class AvailablePackagesAdapter(
     }
 }
 
-// Adaptador para mostrar cada pedido dentro del paquete
 class PackageOrderAdapter(
-    private val orders: List<com.agroapp.model.DynamicPackageOrder>,
+    private var orders: MutableList<DynamicPackageOrder>,
     private val onStatusChange: (String, String, String?) -> Unit
 ) : RecyclerView.Adapter<PackageOrderAdapter.OrderViewHolder>() {
+
+    constructor(
+        orders: List<DynamicPackageOrder>,
+        onStatusChange: (String, String, String?) -> Unit
+    ) : this(orders.toMutableList(), onStatusChange)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -94,10 +105,19 @@ class PackageOrderAdapter(
     }
 
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
-        holder.bind(orders[position])
+        holder.bind(orders[position], position)
     }
 
     override fun getItemCount() = orders.size
+
+    // Eliminar pedido de la lista al entregar
+    fun removeOrder(position: Int) {
+        if (position >= 0 && position < orders.size) {
+            orders.removeAt(position)
+            notifyItemRemoved(position)
+            notifyItemRangeChanged(position, orders.size)
+        }
+    }
 
     inner class OrderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvCustomerName: TextView = itemView.findViewById(R.id.tvCustomerName)
@@ -109,49 +129,65 @@ class PackageOrderAdapter(
         private val btnMarkDelivered: Button = itemView.findViewById(R.id.btnMarkDelivered)
         private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
 
-        fun bind(order: com.agroapp.model.DynamicPackageOrder) {
+        fun bind(order: DynamicPackageOrder, position: Int) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-
-            tvCustomerName.text = order.customer_name
-            tvCustomerPhone.text = "📞 ${order.customer_phone}"
-            tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Dirección no especificada"}"
+            tvCustomerName.text = "👤 ${order.customer_name.ifEmpty { "Cliente" }}"
+            tvCustomerPhone.text = "📞 ${order.customer_phone.ifEmpty { "No disponible" }}"
+            tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
             tvTotalAmount.text = formatter.format(order.total_amount)
-
-            // Estado actual del pedido (por defecto "pending")
             updateStatusUI("pending")
 
-            // Botón Pendiente
             btnMarkPending.setOnClickListener {
                 updateStatusUI("pending")
                 onStatusChange(order.order_id, "pending", null)
             }
 
-            // Botón Entregado
             btnMarkDelivered.setOnClickListener {
                 updateStatusUI("delivered")
                 onStatusChange(order.order_id, "delivered", null)
+                // Eliminar de la lista al marcar entregado
+                removeOrder(position)
             }
 
-            // Botón Foto
+            // Botón foto: abre cámara y al tomar foto marca como entregado
             btnTakePhoto.setOnClickListener {
-                // Aquí se abrirá la cámara
-                onStatusChange(order.order_id, "photo", null)
+                val context = itemView.context
+                val photoFile = File(context.cacheDir, "delivery_${order.order_id}.jpg")
+                val photoUri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.provider",
+                    photoFile
+                )
+                val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                    putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+                }
+                // Notificar con estado "photo" — DriverActivity maneja el resultado
+                onStatusChange(order.order_id, "photo", photoUri.toString())
+
+                if (context is Activity) {
+                    context.startActivityForResult(intent, REQUEST_PHOTO)
+                }
+                // Al volver de la cámara, marcar entregado y eliminar
+                updateStatusUI("delivered")
+                removeOrder(position)
             }
         }
 
         private fun updateStatusUI(status: String) {
             when (status) {
                 "pending" -> {
-                    tvOrderStatus.text = "Pendiente"
+                    tvOrderStatus.text = "⏳ Pendiente"
                     tvOrderStatus.setTextColor(itemView.context.getColor(android.R.color.holo_orange_dark))
-                    tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_orange_light))
                 }
                 "delivered" -> {
-                    tvOrderStatus.text = "Entregado ✓"
+                    tvOrderStatus.text = "✅ Entregado"
                     tvOrderStatus.setTextColor(itemView.context.getColor(android.R.color.holo_green_dark))
-                    tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_green_light))
                 }
             }
         }
+    }
+
+    companion object {
+        const val REQUEST_PHOTO = 1001
     }
 }
