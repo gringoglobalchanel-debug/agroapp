@@ -13,6 +13,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Encabezado del paquete -->
         <TextView
             android:id="@+id/tvPackageSize"
             android:layout_width="match_parent"
@@ -47,6 +48,31 @@
             android:textSize="12sp"
             android:textColor="#757575"
             android:layout_marginTop="4dp" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Título pedidos -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📦 Pedidos a entregar:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#333333" />
+
+        <!-- Lista de pedidos -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvOrdersInMyPackage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="false" />
 
     </LinearLayout>
 
