@@ -89,14 +89,11 @@ class AvailablePackagesAdapter(
 }
 
 class PackageOrderAdapter(
-    private var orders: MutableList<DynamicPackageOrder>,
+    orders: List<DynamicPackageOrder>,
     private val onStatusChange: (String, String, String?) -> Unit
 ) : RecyclerView.Adapter<PackageOrderAdapter.OrderViewHolder>() {
 
-    constructor(
-        orders: List<DynamicPackageOrder>,
-        onStatusChange: (String, String, String?) -> Unit
-    ) : this(orders.toMutableList(), onStatusChange)
+    private var orders: MutableList<DynamicPackageOrder> = orders.toMutableList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val view = LayoutInflater.from(parent.context)
