@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvPackageSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Paquete #12345678"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#1B5E20" />
+
+        <TextView
+            android:id="@+id/tvOrdersCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="15 pedidos"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tomado"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#FF9800" />
+
+        <TextView
+            android:id="@+id/tvTakenAt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tomado: 21/03 10:30"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

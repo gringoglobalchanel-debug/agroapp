@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="80dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/tvChipEmoji"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:scaleType="centerCrop"
+        android:background="#E8F5E9"
+        android:padding="4dp" />
+
+    <TextView
+        android:id="@+id/tvChipName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="10sp"
+        android:textColor="#2E7D32"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:maxLines="1"
+        android:gravity="center"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/tvChipPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="9sp"
+        android:textColor="#757575"
+        android:gravity="center"
+        android:maxLines="1" />
+
+</LinearLayout>

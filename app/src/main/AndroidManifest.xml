@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.agroapp">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:name=".AgroApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Agro App"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".ui.RegisterActivity" android:exported="false"/>
+        <activity android:name=".ui.HomeActivity" android:exported="false"/>
+        <activity android:name=".ui.CartActivity" android:exported="false"/>
+        <activity android:name=".ui.VendorActivity" android:exported="false"/>
+        <activity android:name=".ui.ProductsActivity" android:exported="false"/>
+        <activity android:name=".ui.OrdersActivity" android:exported="false"/>
+        <activity android:name=".ui.ProfileActivity" android:exported="false"/>
+
+        <!-- NUEVA ACTIVIDAD PARA REPARTIDORES -->
+        <activity android:name=".ui.DriverActivity" android:exported="false"/>
+
+    </application>
+
+</manifest>
