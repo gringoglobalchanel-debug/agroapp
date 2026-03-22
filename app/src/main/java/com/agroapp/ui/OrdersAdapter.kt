@@ -57,14 +57,14 @@ class OrdersAdapter(
         val paymentMethod = if (order.paymentMethod == "cash") "Contra entrega" else "Tarjeta"
         holder.tvDate.text = "📅 Entrega: $deliveryDate  •  💳 $paymentMethod"
 
-        // Productos
+        // Productos — usa item.subtotal que ahora se calcula como unitPrice * quantity
         val productsList = order.items?.joinToString("\n") { item ->
             "• ${item.products?.name ?: "Producto"} x${formatQty(item.quantity)} ${item.products?.unit ?: ""} — $${"%.2f".format(item.subtotal)}"
         } ?: "Sin detalles"
         holder.tvProducts.text = productsList
 
-        // Total
-        holder.tvTotal.text = "Total: $${"%.2f".format(order.totalAmount)}"
+        // Total — usa displayTotal que tiene fallback para pedidos viejos con 0.00
+        holder.tvTotal.text = "Total: $${"%.2f".format(order.displayTotal)}"
 
         // Botón cancelar — solo si está pendiente
         if (order.status == "pending") {

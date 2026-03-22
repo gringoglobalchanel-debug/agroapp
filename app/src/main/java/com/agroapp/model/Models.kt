@@ -69,7 +69,10 @@ data class Order(
     val notes: String?,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("order_items") val items: List<OrderItem>?
-)
+) {
+    // Si total_amount viene 0 (pedidos viejos), calcularlo sumando los items
+    val displayTotal: Double get() = if (totalAmount > 0) totalAmount else items?.sumOf { it.subtotal } ?: 0.0
+}
 
 data class OrderItem(
     val id: Int,
@@ -77,9 +80,11 @@ data class OrderItem(
     @SerializedName("product_id") val productId: Int,
     val quantity: Double,
     @SerializedName("unit_price") val unitPrice: Double,
-    val subtotal: Double,
     val products: ProductSimple?
-)
+) {
+    // subtotal calculado localmente, no depende del backend
+    val subtotal: Double get() = unitPrice * quantity
+}
 
 data class ProductSimple(val name: String, val unit: String)
 
@@ -238,7 +243,7 @@ data class TakePackageRequest(
 
 data class TakePackageResponse(
     val message: String,
-    @SerializedName("package") val packageData: DynamicPackage,  // CORREGIDO
+    @SerializedName("package") val packageData: DynamicPackage,
     val driver_payment: Double,
     val platform_fee: Double,
     val total_orders: Int

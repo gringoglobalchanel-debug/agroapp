@@ -161,11 +161,12 @@ class OrderViewModel : ViewModel() {
         deliveryAddress: String,
         notes: String?
     ) {
-        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        if (hour < 8 || hour >= 12) {
-            _orderState.value = OrderState.OutOfTime
-            return
-        }
+        // ========== VALIDACIÓN DE HORARIO DESACTIVADA PARA PRUEBAS ==========
+        // val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        // if (hour < 8 || hour >= 12) {
+        //     _orderState.value = OrderState.OutOfTime
+        //     return
+        // }
 
         viewModelScope.launch {
             _orderState.postValue(OrderState.Loading)
