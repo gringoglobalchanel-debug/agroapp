@@ -70,7 +70,6 @@ data class Order(
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("order_items") val items: List<OrderItem>?
 ) {
-    // Si total_amount viene 0 (pedidos viejos), calcularlo sumando los items
     val displayTotal: Double get() = if (totalAmount > 0) totalAmount else items?.sumOf { it.subtotal } ?: 0.0
 }
 
@@ -82,7 +81,6 @@ data class OrderItem(
     @SerializedName("unit_price") val unitPrice: Double,
     val products: ProductSimple?
 ) {
-    // subtotal calculado localmente, no depende del backend
     val subtotal: Double get() = unitPrice * quantity
 }
 
@@ -228,13 +226,16 @@ data class DynamicPackage(
     val orders: List<DynamicPackageOrder>? = null
 )
 
+// CORREGIDO: Agregados campos customer_name y customer_phone
 data class DynamicPackageOrder(
     val order_id: String,
     val user_id: String,
     val delivery_address: String?,
     val total_amount: Double,
     val payment_method: String,
-    val created_at: String
+    val created_at: String,
+    val customer_name: String = "Cliente",      // NUEVO
+    val customer_phone: String = "No disponible" // NUEVO
 )
 
 data class TakePackageRequest(
