@@ -147,4 +147,13 @@ interface ApiService {
     suspend fun getDriverPackageEarnings(
         @Header("Authorization") token: String
     ): Response<DriverPackageEarnings>
+
+    // ==================== DRIVER - ACTUALIZAR ESTADO DEL PEDIDO ====================
+
+    @PATCH("driver/orders/{id}/status")
+    suspend fun updateDeliveryOrderStatus(
+        @Header("Authorization") token: String,
+        @Path("id") orderId: String,
+        @Body body: UpdateStatusRequest
+    ): Response<Order>
 }

@@ -168,17 +168,24 @@ class DriverViewModel : ViewModel() {
 
     fun resetTakePackageState() { _takePackageState.value = null }
 
-    // ✅ NUEVO: actualizar estado de un pedido dentro de un paquete
+    // ✅ ACTUALIZAR ESTADO DE UN PEDIDO (USANDO ENDPOINT DE DRIVER)
     fun updateOrderStatus(orderId: String, newStatus: String) {
         viewModelScope.launch {
             try {
-                api.updateOrderStatus(
+                val response = api.updateDeliveryOrderStatus(
                     SessionManager.getToken(),
                     orderId,
                     UpdateStatusRequest(newStatus)
                 )
-                loadMyPackages()
-            } catch (e: Exception) { }
+                if (response.isSuccessful) {
+                    android.util.Log.d("DriverViewModel", "✅ Pedido $orderId actualizado a $newStatus")
+                    loadMyPackages() // Recargar lista después de actualizar
+                } else {
+                    android.util.Log.e("DriverViewModel", "❌ Error al actualizar pedido: ${response.code()} - ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DriverViewModel", "❌ Error de conexión: ${e.message}")
+            }
         }
     }
 }
