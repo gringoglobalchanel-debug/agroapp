@@ -3,16 +3,14 @@
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.RadioGroup
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -35,6 +33,7 @@ class CartActivity : AppCompatActivity() {
     private var pendingYappiOrderId: String? = null
     private var pendingYappiCode: String? = null
     private var pendingTotal: Double = 0.0
+    private var selectedTip: Double = 0.0
 
     companion object {
         const val DELIVERY_FEE = 2.50
@@ -46,11 +45,22 @@ class CartActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         val rvCartItems = findViewById<RecyclerView>(R.id.rvCartItems)
-        val tvTotal = findViewById<TextView>(R.id.tvTotal)
         val tvEmpty = findViewById<TextView>(R.id.tvEmpty)
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         val rgPaymentMethod = findViewById<RadioGroup>(R.id.rgPaymentMethod)
         val btnConfirmOrder = findViewById<Button>(R.id.btnConfirmOrder)
+        val tvSubtotal = findViewById<TextView>(R.id.tvSubtotal)
+        val tvDeliveryFee = findViewById<TextView>(R.id.tvDeliveryFee)
+        val tvTotal = findViewById<TextView>(R.id.tvTotal)
+        val tvSelectedTip = findViewById<TextView>(R.id.tvSelectedTip)
+        val layoutSelectedTip = findViewById<LinearLayout>(R.id.layoutSelectedTip)
+
+        // Botones de propina
+        val btnTip1 = findViewById<Button>(R.id.btnTip1)
+        val btnTip3 = findViewById<Button>(R.id.btnTip3)
+        val btnTip5 = findViewById<Button>(R.id.btnTip5)
+        val etCustomTip = findViewById<EditText>(R.id.etCustomTip)
+        val btnApplyCustomTip = findViewById<Button>(R.id.btnApplyCustomTip)
 
         PaymentConfiguration.init(this, "pk_test_51TCsa5BLWgq8LL5oSzSEf91oRnuyWGUUUhLtsA4dH4ZZC3LgqquMV4F63yg2GJ94wVqFaZWAPACC8xYHuQEHTGBY00qafIlQAu")
         paymentSheet = PaymentSheet(this, ::onPaymentSheetResult)
@@ -58,6 +68,8 @@ class CartActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.title = "Mi Carrito"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        tvDeliveryFee.text = "$${"%.2f".format(DELIVERY_FEE)}"
 
         adapter = CartAdapter(
             cartItems = emptyMap(),
@@ -72,8 +84,44 @@ class CartActivity : AppCompatActivity() {
         rvCartItems.adapter = adapter
 
         productViewModel.cart.observe(this, Observer { cartMap ->
-            updateCartUI(cartMap ?: emptyMap(), tvTotal, tvEmpty, rvCartItems)
+            updateCartUI(cartMap ?: emptyMap(), tvEmpty, rvCartItems, tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
         })
+
+        // Botones de propina
+        btnTip1.setOnClickListener {
+            selectedTip = 1.0
+            updateTipUI(btnTip1, btnTip1, btnTip3, btnTip5, etCustomTip, tvSelectedTip, layoutSelectedTip)
+            updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
+        }
+
+        btnTip3.setOnClickListener {
+            selectedTip = 3.0
+            updateTipUI(btnTip3, btnTip1, btnTip3, btnTip5, etCustomTip, tvSelectedTip, layoutSelectedTip)
+            updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
+        }
+
+        btnTip5.setOnClickListener {
+            selectedTip = 5.0
+            updateTipUI(btnTip5, btnTip1, btnTip3, btnTip5, etCustomTip, tvSelectedTip, layoutSelectedTip)
+            updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
+        }
+
+        btnApplyCustomTip.setOnClickListener {
+            val tipText = etCustomTip.text.toString()
+            if (!TextUtils.isEmpty(tipText)) {
+                try {
+                    selectedTip = tipText.toDouble()
+                    if (selectedTip < 0) selectedTip = 0.0
+                    updateTipUI(null, btnTip1, btnTip3, btnTip5, etCustomTip, tvSelectedTip, layoutSelectedTip, true)
+                    updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
+                    etCustomTip.text.clear()
+                } catch (e: NumberFormatException) {
+                    Toast.makeText(this, "Ingresa un monto válido", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, "Ingresa un monto", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         btnConfirmOrder.setOnClickListener {
             val paymentMethod = when (rgPaymentMethod.checkedRadioButtonId) {
@@ -132,24 +180,70 @@ class CartActivity : AppCompatActivity() {
         })
     }
 
-    // Calcula el subtotal de productos sin envío
     private fun getProductsTotal(): Double {
         val cartItems = productViewModel.getCartItemsMap()
         return cartItems.entries.sumOf { it.key.price * it.value }
     }
 
-    // Calcula el total final incluyendo envío
-    private fun getFinalTotal(): Double = getProductsTotal() + DELIVERY_FEE
+    private fun getFinalTotal(): Double = getProductsTotal() + DELIVERY_FEE + selectedTip
+
+    private fun updateTipUI(
+        activeButton: Button?,
+        btn1: Button,
+        btn2: Button,
+        btn3: Button,
+        etCustomTip: EditText,
+        tvSelectedTip: TextView,
+        layoutSelectedTip: LinearLayout,
+        isCustom: Boolean = false
+    ) {
+        val buttons = listOf(btn1, btn2, btn3)
+        buttons.forEach { btn ->
+            if (btn == activeButton) {
+                btn.setBackgroundColor(ContextCompat.getColor(this, R.color.green_700))
+                btn.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+            } else {
+                btn.setBackgroundColor(ContextCompat.getColor(this, R.color.gray_100))
+                btn.setTextColor(ContextCompat.getColor(this, R.color.green_700))
+            }
+        }
+
+        if (isCustom || selectedTip > 0) {
+            layoutSelectedTip.visibility = View.VISIBLE
+            tvSelectedTip.text = "$${"%.2f".format(selectedTip)}"
+            etCustomTip.text.clear()
+        } else {
+            layoutSelectedTip.visibility = View.GONE
+        }
+    }
+
+    private fun updateTotal(
+        tvSubtotal: TextView,
+        tvTotal: TextView,
+        tvSelectedTip: TextView,
+        layoutSelectedTip: LinearLayout
+    ) {
+        val subtotal = getProductsTotal()
+        tvSubtotal.text = "$${"%.2f".format(subtotal)}"
+
+        val total = subtotal + DELIVERY_FEE + selectedTip
+        tvTotal.text = "$${"%.2f".format(total)}"
+
+        if (selectedTip > 0) {
+            layoutSelectedTip.visibility = View.VISIBLE
+            tvSelectedTip.text = "$${"%.2f".format(selectedTip)}"
+        } else {
+            layoutSelectedTip.visibility = View.GONE
+        }
+    }
 
     private fun processCardPayment() {
-        val productsTotal = getProductsTotal()
+        val finalTotal = getFinalTotal()
 
-        if (productsTotal <= 0) {
+        if (finalTotal <= 0) {
             Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val finalTotal = getFinalTotal()
 
         orderViewModel.createPaymentIntent(finalTotal) { success, secret ->
             if (success && secret != null) {
@@ -162,14 +256,13 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun processYappiPayment() {
-        val productsTotal = getProductsTotal()
+        val finalTotal = getFinalTotal()
 
-        if (productsTotal <= 0) {
+        if (finalTotal <= 0) {
             Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val finalTotal = getFinalTotal()
         pendingTotal = finalTotal
 
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
@@ -192,7 +285,7 @@ class CartActivity : AppCompatActivity() {
 
     private fun showYappiPaymentDialog(total: Double, referenceCode: String, orderId: String) {
         val yappiPhone = "50760000000"
-        val productsTotal = total - DELIVERY_FEE
+        val productsTotal = total - DELIVERY_FEE - selectedTip
 
         AlertDialog.Builder(this)
             .setTitle("Pagar con YAPPI")
@@ -202,7 +295,8 @@ class CartActivity : AppCompatActivity() {
                 📱 Número: $yappiPhone
                 🛒 Productos: $${"%.2f".format(productsTotal)}
                 🚚 Envío: $${"%.2f".format(DELIVERY_FEE)}
-                💰 Total: $${"%.2f".format(total)}
+                💰 Propina: $${"%.2f".format(selectedTip)}
+                💵 Total: $${"%.2f".format(total)}
                 📝 Referencia: $referenceCode
                 
                 Luego presiona "YA PAGUÉ" para confirmar tu pedido.
@@ -299,22 +393,25 @@ class CartActivity : AppCompatActivity() {
 
     private fun updateCartUI(
         cartMap: Map<com.agroapp.model.Product, Double>,
-        tvTotal: TextView,
         tvEmpty: TextView,
-        rvCartItems: RecyclerView
+        rvCartItems: RecyclerView,
+        tvSubtotal: TextView,
+        tvTotal: TextView,
+        tvSelectedTip: TextView,
+        layoutSelectedTip: LinearLayout
     ) {
         if (cartMap.isEmpty()) {
             tvEmpty.visibility = View.VISIBLE
             rvCartItems.visibility = View.GONE
-            tvTotal.text = "Total: $0.00"
+            tvSubtotal.text = "$0.00"
+            tvTotal.text = "$0.00"
+            layoutSelectedTip.visibility = View.GONE
+            selectedTip = 0.0
         } else {
             tvEmpty.visibility = View.GONE
             rvCartItems.visibility = View.VISIBLE
             adapter.updateCart(cartMap)
-
-            val productsTotal = cartMap.entries.sumOf { it.key.price * it.value }
-            val finalTotal = productsTotal + DELIVERY_FEE
-            tvTotal.text = "Productos: $${"%.2f".format(productsTotal)} + Envío: $${"%.2f".format(DELIVERY_FEE)} = Total: $${"%.2f".format(finalTotal)}"
+            updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
         }
     }
 

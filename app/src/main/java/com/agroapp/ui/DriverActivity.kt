@@ -1,15 +1,26 @@
 package com.agroapp.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +28,7 @@ import com.agroapp.R
 import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.DriverViewModel
 import com.agroapp.viewmodel.TakePackageState
+import java.io.File
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -27,6 +39,55 @@ class DriverActivity : AppCompatActivity() {
     private val viewModel: DriverViewModel by viewModels()
     private lateinit var availablePackagesAdapter: AvailablePackagesAdapter
     private lateinit var myPackagesAdapter: MyPackagesAdapter
+
+    // Variables para manejar la foto del comprobante
+    var pendingPhotoOrderId: String? = null
+    var pendingPhotoPosition: Int = -1
+    var pendingPhotoAdapter: PackageOrderAdapter? = null
+    var pendingPhotoAdapterForMyPackages: MyPackageOrdersAdapter? = null
+    private var pendingPhotoFile: File? = null
+
+    // Lanzador para el resultado de la cámara
+    private val takePhotoLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val orderId = pendingPhotoOrderId
+            val position = pendingPhotoPosition
+            val adapter = pendingPhotoAdapter
+            val adapterForMyPackages = pendingPhotoAdapterForMyPackages
+            val photoFile = pendingPhotoFile
+
+            if (orderId != null && position >= 0 && photoFile != null && photoFile.exists()) {
+                // Mostrar diálogo con la foto
+                showPhotoConfirmationDialog(
+                    orderId = orderId,
+                    position = position,
+                    adapter = adapter,
+                    adapterForMyPackages = adapterForMyPackages,
+                    photoFile = photoFile
+                )
+            } else {
+                Toast.makeText(this, "Error al procesar la foto", Toast.LENGTH_SHORT).show()
+                clearPendingPhoto()
+            }
+        } else if (result.resultCode != RESULT_OK) {
+            Toast.makeText(this, "Foto cancelada", Toast.LENGTH_SHORT).show()
+            clearPendingPhoto()
+        }
+    }
+
+    // Lanzador para solicitar permiso de cámara
+    private val requestCameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            openCamera()
+        } else {
+            Toast.makeText(this, "Se necesita permiso de cámara para tomar fotos de comprobante", Toast.LENGTH_LONG).show()
+            clearPendingPhoto()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,17 +119,31 @@ class DriverActivity : AppCompatActivity() {
             toolbar.setSubtitleTextColor(resources.getColor(android.R.color.white, theme))
         }
 
-        // FIX: pasar los dos parámetros que requiere AvailablePackagesAdapter
+        // Adaptador para Bloques Disponibles
         availablePackagesAdapter = AvailablePackagesAdapter(
             onTakeClick = { packageItem ->
                 showTakePackageDialog(packageItem)
             },
             onOrderStatusChange = { orderId, newStatus, photoUri ->
                 viewModel.updateOrderStatus(orderId, newStatus)
+            },
+            onTakePhotoClick = { orderId, position, adapter ->
+                pendingPhotoOrderId = orderId
+                pendingPhotoPosition = position
+                pendingPhotoAdapter = adapter
+                pendingPhotoAdapterForMyPackages = null
+                checkCameraPermissionAndOpen()
             }
         )
 
-        myPackagesAdapter = MyPackagesAdapter()
+        // Adaptador para Mis Bloques
+        myPackagesAdapter = MyPackagesAdapter { orderId, position, adapter ->
+            pendingPhotoOrderId = orderId
+            pendingPhotoPosition = position
+            pendingPhotoAdapter = null
+            pendingPhotoAdapterForMyPackages = adapter
+            checkCameraPermissionAndOpen()
+        }
 
         findViewById<RecyclerView>(R.id.rvAvailableBlocks).apply {
             layoutManager = LinearLayoutManager(this@DriverActivity)
@@ -167,10 +242,10 @@ class DriverActivity : AppCompatActivity() {
     }
 
     private fun showTakePackageDialog(packageItem: com.agroapp.model.DynamicPackage) {
-        val totalPayment = packageItem.current_size * 1.25
+        val totalPayment = packageItem.current_size * 2.25
         val driverPayment = totalPayment * 0.90
 
-        androidx.appcompat.app.AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle("Tomar paquete")
             .setMessage("""
                 📦 Paquete con ${packageItem.current_size} pedidos
@@ -200,5 +275,104 @@ class DriverActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         finish()
         return true
+    }
+
+    private fun checkCameraPermissionAndOpen() {
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> {
+                openCamera()
+            }
+            else -> {
+                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    private fun openCamera() {
+        val orderId = pendingPhotoOrderId
+        if (orderId == null) {
+            Toast.makeText(this, "Error: No hay pedido pendiente", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        pendingPhotoFile = File(cacheDir, "delivery_${orderId}.jpg")
+        val photoUri = FileProvider.getUriForFile(
+            this,
+            "${packageName}.provider",
+            pendingPhotoFile!!
+        )
+
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+            putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+        }
+
+        if (intent.resolveActivity(packageManager) != null) {
+            takePhotoLauncher.launch(intent)
+        } else {
+            Toast.makeText(this, "No hay cámara disponible en este dispositivo", Toast.LENGTH_SHORT).show()
+            clearPendingPhoto()
+        }
+    }
+
+    private fun showPhotoConfirmationDialog(
+        orderId: String,
+        position: Int,
+        adapter: PackageOrderAdapter?,
+        adapterForMyPackages: MyPackageOrdersAdapter?,
+        photoFile: File
+    ) {
+        // Cargar la foto
+        val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+
+        // Crear vista personalizada para el diálogo
+        val dialogView = layoutInflater.inflate(R.layout.dialog_photo_confirmation, null)
+        val imageView = dialogView.findViewById<ImageView>(R.id.ivPhotoPreview)
+        imageView.setImageBitmap(bitmap)
+
+        AlertDialog.Builder(this)
+            .setTitle("Confirmar entrega")
+            .setView(dialogView)
+            .setMessage("¿Confirmas que este pedido fue entregado correctamente?")
+            .setPositiveButton("Aceptar entrega") { _, _ ->
+                // Actualizar estado del pedido
+                viewModel.updateOrderStatus(orderId, "completed")
+                Toast.makeText(this, "✅ Pedido entregado correctamente", Toast.LENGTH_SHORT).show()
+
+                // Remover el pedido del adaptador correspondiente
+                if (adapter != null) {
+                    adapter.removeOrder(position)
+                } else if (adapterForMyPackages != null) {
+                    adapterForMyPackages.removeOrder(position)
+                }
+
+                // Eliminar el archivo de foto temporal
+                photoFile.delete()
+
+                clearPendingPhoto()
+
+                // Recargar la lista de mis paquetes para actualizar la vista
+                viewModel.loadMyPackages()
+            }
+            .setNegativeButton("Reintentar") { _, _ ->
+                // Volver a abrir la cámara
+                photoFile.delete()
+                checkCameraPermissionAndOpen()
+            }
+            .setNeutralButton("Cancelar") { _, _ ->
+                // Cancelar, no hacer nada
+                Toast.makeText(this, "Entrega cancelada", Toast.LENGTH_SHORT).show()
+                clearPendingPhoto()
+                photoFile.delete()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun clearPendingPhoto() {
+        pendingPhotoOrderId = null
+        pendingPhotoPosition = -1
+        pendingPhotoAdapter = null
+        pendingPhotoAdapterForMyPackages = null
+        pendingPhotoFile = null
     }
 }

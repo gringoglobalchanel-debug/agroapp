@@ -1,26 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="#2E7D32"
-        android:title="Carrito de Compras"
-        android:titleTextColor="@android:color/white" />
+        android:title="Mi Carrito"
+        android:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/ic_back"
+        app:navigationIconTint="@android:color/white" />
 
     <TextView
         android:id="@+id/tvEmpty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tu carrito está vacío"
+        android:text="🛒 Tu carrito está vacío"
         android:textSize="16sp"
         android:textColor="#757575"
         android:gravity="center"
-        android:padding="32dp"
+        android:padding="48dp"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -28,58 +32,269 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
 
+    <!-- Sección de resumen - Estilo DoorDash -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
         android:background="@android:color/white"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:padding="20dp">
 
         <TextView
-            android:id="@+id/tvTotal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Total: $0.00"
+            android:text="Resumen del pedido"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#2E7D32"
-            android:layout_marginBottom="12dp" />
+            android:textColor="#212121"
+            android:layout_marginBottom="16dp" />
 
+        <!-- Subtotal -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Subtotal"
+                android:textSize="14sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tvSubtotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$0.00"
+                android:textSize="14sp"
+                android:textColor="#212121"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Envío -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Envío"
+                android:textSize="14sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tvDeliveryFee"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$2.50"
+                android:textSize="14sp"
+                android:textColor="#212121" />
+        </LinearLayout>
+
+        <!-- Línea divisoria -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Sección de Propina -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Método de pago:"
+            android:text="Propina"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:textColor="#212121"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnTip1"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="$1"
+                android:textSize="14sp"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="#2E7D32"
+                android:layout_marginEnd="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+            <Button
+                android:id="@+id/btnTip3"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="$3"
+                android:textSize="14sp"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="#2E7D32"
+                android:layout_marginEnd="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+            <Button
+                android:id="@+id/btnTip5"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="$5"
+                android:textSize="14sp"
+                android:backgroundTint="#F5F5F5"
+                android:textColor="#2E7D32"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <EditText
+                android:id="@+id/etCustomTip"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:hint="Monto personalizado"
+                android:inputType="numberDecimal"
+                android:textSize="14sp"
+                android:padding="12dp"
+                android:background="@drawable/bg_edittext_border"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnApplyCustomTip"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Aplicar"
+                android:textSize="14sp"
+                android:backgroundTint="#2E7D32"
+                android:paddingHorizontal="16dp" />
+
+        </LinearLayout>
+
+        <!-- Propina seleccionada -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone"
+            android:id="@+id/layoutSelectedTip">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Propina"
+                android:textSize="14sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tvSelectedTip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$0.00"
+                android:textSize="14sp"
+                android:textColor="#212121"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Línea divisoria -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="12dp" />
+
+        <!-- Total -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Total"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#212121" />
+
+            <TextView
+                android:id="@+id/tvTotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$0.00"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32" />
+        </LinearLayout>
+
+        <!-- Método de pago -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Método de pago"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
             android:layout_marginBottom="8dp" />
 
         <RadioGroup
             android:id="@+id/rgPaymentMethod"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="12dp">
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
             <RadioButton
                 android:id="@+id/rbYappi"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="48dp"
-                android:text="Pago con Yappi"
+                android:layout_weight="1"
+                android:text="📱 Yappi"
                 android:checked="true"
-                android:textSize="15sp"
-                android:paddingVertical="12dp"
-                android:minHeight="48dp" />
+                android:textSize="14sp"
+                android:gravity="center"
+                android:button="@null"
+                android:background="@drawable/bg_payment_option"
+                android:layout_marginEnd="8dp" />
 
             <RadioButton
                 android:id="@+id/rbCard"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="48dp"
-                android:text="Pagar con tarjeta"
-                android:textSize="15sp"
-                android:paddingVertical="12dp"
-                android:minHeight="48dp" />
+                android:layout_weight="1"
+                android:text="💳 Tarjeta"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:button="@null"
+                android:background="@drawable/bg_payment_option" />
         </RadioGroup>
 
         <ProgressBar
@@ -88,7 +303,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
-            android:layout_margin="8dp" />
+            android:layout_marginBottom="12dp" />
 
         <Button
             android:id="@+id/btnConfirmOrder"
@@ -97,6 +312,7 @@
             android:text="CONFIRMAR PEDIDO"
             android:textAllCaps="true"
             android:backgroundTint="#2E7D32"
+            android:textSize="16sp"
             android:minHeight="48dp" />
 
     </LinearLayout>

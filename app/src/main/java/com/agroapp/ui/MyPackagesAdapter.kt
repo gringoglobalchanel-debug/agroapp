@@ -21,7 +21,7 @@ class MyPackagesAdapter(
 
     fun submitList(list: List<DynamicPackage>) {
         // Filtrar paquetes que tienen al menos un pedido (no vacíos)
-        val nonEmptyPackages = list.filter { it.orders.isNotEmpty() }
+        val nonEmptyPackages = list.filter { it.orders?.isNotEmpty() == true }
         packages = nonEmptyPackages
         notifyDataSetChanged()
     }

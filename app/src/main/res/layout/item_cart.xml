@@ -4,42 +4,105 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- Nombre del producto -->
-        <TextView
-            android:id="@+id/tvCartItemName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Producto"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#2E7D32"
-            android:layout_marginBottom="4dp" />
+        <!-- Imagen del producto -->
+        <ImageView
+            android:id="@+id/ivProductImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop"
+            android:background="#F0F0F0"
+            android:src="@drawable/ic_product_placeholder"
+            android:layout_marginEnd="12dp"
+            app:cornerRadius="8dp" />
 
-        <!-- Precio y subtotal -->
+        <!-- Información del producto -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCartItemName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Producto"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="4dp" />
 
             <TextView
                 android:id="@+id/tvCartItemPrice"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="$0.00 / unidad"
-                android:textSize="14sp"
-                android:textColor="#757575" />
+                android:textSize="13sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Cantidad:"
+                    android:textSize="13sp"
+                    android:textColor="#666666" />
+
+                <ImageButton
+                    android:id="@+id/btnDecrease"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_minus"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#2E7D32"
+                    android:padding="8dp" />
+
+                <TextView
+                    android:id="@+id/tvCartItemQuantity"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:text="1"
+                    android:gravity="center"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121" />
+
+                <ImageButton
+                    android:id="@+id/btnIncrease"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_plus"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    app:tint="#2E7D32"
+                    android:padding="8dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Subtotal y eliminar -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="end"
+            android:justifyContent="space-between">
 
             <TextView
                 android:id="@+id/tvCartItemSubtotal"
@@ -48,61 +111,19 @@
                 android:text="$0.00"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#2E7D32"
-                android:layout_marginStart="8dp" />
-        </LinearLayout>
-
-        <!-- Control de cantidad -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#F5F5F5"
-            android:padding="4dp"
-            android:layout_marginBottom="8dp">
-
-            <ImageButton
-                android:id="@+id/btnDecrease"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_minus"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                app:tint="#2E7D32"
-                android:padding="12dp"
-                android:contentDescription="Disminuir" />
-
-            <TextView
-                android:id="@+id/tvCartItemQuantity"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="1"
-                android:gravity="center"
-                android:textSize="16sp"
-                android:textStyle="bold"
                 android:textColor="#2E7D32" />
 
             <ImageButton
-                android:id="@+id/btnIncrease"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_plus"
+                android:id="@+id/btnRemove"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_delete"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                app:tint="#2E7D32"
-                android:padding="12dp"
-                android:contentDescription="Aumentar" />
-        </LinearLayout>
+                app:tint="#D32F2F"
+                android:padding="4dp"
+                android:layout_marginTop="8dp" />
 
-        <!-- Botón eliminar -->
-        <Button
-            android:id="@+id/btnRemove"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Eliminar"
-            android:textSize="14sp"
-            android:backgroundTint="#D32F2F"
-            android:layout_marginTop="4dp" />
+        </LinearLayout>
 
     </LinearLayout>
 
