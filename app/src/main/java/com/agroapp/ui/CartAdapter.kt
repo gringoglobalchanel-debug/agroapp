@@ -4,10 +4,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.Product
+import com.bumptech.glide.Glide
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -45,6 +47,7 @@ class CartAdapter(
         private val btnDecrease: ImageButton = itemView.findViewById(R.id.btnDecrease)
         private val btnIncrease: ImageButton = itemView.findViewById(R.id.btnIncrease)
         private val btnRemove: ImageButton = itemView.findViewById(R.id.btnRemove)
+        private val ivProductImage: ImageView = itemView.findViewById(R.id.ivProductImage)
 
         fun bind(product: Product, quantity: Double) {
             tvName.text = product.name
@@ -52,6 +55,18 @@ class CartAdapter(
             tvQuantity.text = if (quantity % 1 == 0.0) quantity.toInt().toString() else String.format("%.1f", quantity)
             val subtotal = product.price * quantity
             tvSubtotal.text = formatter.format(subtotal)
+
+            // Cargar imagen del producto - CORREGIDO: usar imageUrl, no image_url
+            val imageUrl = product.imageUrl
+            if (!imageUrl.isNullOrEmpty()) {
+                Glide.with(itemView.context)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.ic_product_placeholder)
+                    .error(R.drawable.ic_product_placeholder)
+                    .into(ivProductImage)
+            } else {
+                ivProductImage.setImageResource(R.drawable.ic_product_placeholder)
+            }
 
             btnDecrease.setOnClickListener {
                 val newQuantity = quantity - 1.0
