@@ -90,8 +90,14 @@ class HomeActivity : AppCompatActivity() {
 
     private fun setupDireccion() {
         val tvDireccion = findViewById<TextView>(R.id.tvDireccion)
+        val tvCambiarDireccion = findViewById<TextView>(R.id.tvCambiarDireccion)
+
         val direccion = SessionManager.getAddress()
         tvDireccion.text = if (direccion.isNotEmpty()) direccion else "Dirección no especificada"
+
+        tvCambiarDireccion.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
     }
 
     private fun setupSearch() {

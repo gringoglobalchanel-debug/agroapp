@@ -7,11 +7,14 @@
     android:gravity="center_vertical"
     android:padding="16dp">
 
+    <!-- ELIMINAR ESTE BLOQUE DE IMAGEN -->
+    <!--
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@drawable/ic_user_profile"
         android:layout_marginBottom="8dp" />
+    -->
 
     <TextView
         android:id="@+id/tvHeaderName"
