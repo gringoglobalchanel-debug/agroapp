@@ -3,6 +3,7 @@ package com.agroapp.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -12,12 +13,16 @@ import com.agroapp.model.DynamicPackageOrder
 import java.text.NumberFormat
 import java.util.Locale
 
-class MyPackagesAdapter : RecyclerView.Adapter<MyPackagesAdapter.ViewHolder>() {
+class MyPackagesAdapter(
+    private val onTakePhotoClick: (String, Int, MyPackageOrdersAdapter) -> Unit
+) : RecyclerView.Adapter<MyPackagesAdapter.ViewHolder>() {
 
     private var packages: List<DynamicPackage> = emptyList()
 
     fun submitList(list: List<DynamicPackage>) {
-        packages = list
+        // Filtrar paquetes que tienen al menos un pedido (no vacíos)
+        val nonEmptyPackages = list.filter { it.orders.isNotEmpty() }
+        packages = nonEmptyPackages
         notifyDataSetChanged()
     }
 
@@ -56,8 +61,15 @@ class MyPackagesAdapter : RecyclerView.Adapter<MyPackagesAdapter.ViewHolder>() {
                 "Tomado: ${formatDate(it)}"
             } ?: "Pendiente"
 
-            // Mostrar pedidos del cliente
-            val ordersAdapter = MyPackageOrdersAdapter(packageItem.orders ?: emptyList())
+            // Crear adaptador de pedidos con callback para la foto
+            lateinit var ordersAdapter: MyPackageOrdersAdapter
+
+            ordersAdapter = MyPackageOrdersAdapter(
+                orders = packageItem.orders ?: emptyList(),
+                onTakePhotoClick = { orderId, position ->
+                    onTakePhotoClick(orderId, position, ordersAdapter)
+                }
+            )
             rvOrders.layoutManager = LinearLayoutManager(itemView.context)
             rvOrders.adapter = ordersAdapter
         }
@@ -76,8 +88,11 @@ class MyPackagesAdapter : RecyclerView.Adapter<MyPackagesAdapter.ViewHolder>() {
 
 // Adapter para los pedidos dentro de mis paquetes tomados
 class MyPackageOrdersAdapter(
-    private val orders: List<DynamicPackageOrder>
+    private val orders: List<DynamicPackageOrder>,
+    private val onTakePhotoClick: (String, Int) -> Unit
 ) : RecyclerView.Adapter<MyPackageOrdersAdapter.OrderViewHolder>() {
+
+    private var ordersList: MutableList<DynamicPackageOrder> = orders.toMutableList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -86,10 +101,18 @@ class MyPackageOrdersAdapter(
     }
 
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
-        holder.bind(orders[position])
+        holder.bind(ordersList[position], position)
     }
 
-    override fun getItemCount() = orders.size
+    override fun getItemCount() = ordersList.size
+
+    fun removeOrder(position: Int) {
+        if (position >= 0 && position < ordersList.size) {
+            ordersList.removeAt(position)
+            notifyItemRemoved(position)
+            notifyItemRangeChanged(position, ordersList.size)
+        }
+    }
 
     inner class OrderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvCustomerName: TextView = itemView.findViewById(R.id.tvCustomerName)
@@ -97,8 +120,10 @@ class MyPackageOrdersAdapter(
         private val tvDeliveryAddress: TextView = itemView.findViewById(R.id.tvDeliveryAddress)
         private val tvTotalAmount: TextView = itemView.findViewById(R.id.tvTotalAmount)
         private val tvPaymentMethod: TextView = itemView.findViewById(R.id.tvPaymentMethod)
+        private val tvOrderStatus: TextView = itemView.findViewById(R.id.tvOrderStatus)
+        private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
 
-        fun bind(order: DynamicPackageOrder) {
+        fun bind(order: DynamicPackageOrder, position: Int) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
             tvCustomerName.text = "👤 ${order.customer_name ?: "Cliente"}"
             tvCustomerPhone.text = "📞 ${order.customer_phone ?: "No disponible"}"
@@ -109,6 +134,15 @@ class MyPackageOrdersAdapter(
                 "cash" -> "💵 Efectivo"
                 "yappi" -> "📱 Yappi"
                 else -> order.payment_method ?: ""
+            }
+
+            // Estado del pedido
+            tvOrderStatus.text = "🚚 En camino"
+            tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_orange_light))
+
+            // Botón de confirmar entrega
+            btnTakePhoto.setOnClickListener {
+                onTakePhotoClick(order.order_id, position)
             }
         }
     }
