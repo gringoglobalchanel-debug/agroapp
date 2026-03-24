@@ -279,6 +279,29 @@ class OrderViewModel : ViewModel() {
             }
         }
     }
+
+    // ==================== MÉTODO PARA ACTUALIZAR ESTADO DESDE EL DRIVER ====================
+
+    fun updateOrderStatus(orderId: String, newStatus: String, callback: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val response = api.updateOrderStatus(
+                    SessionManager.getToken(),
+                    orderId,
+                    UpdateStatusRequest(newStatus)
+                )
+                if (response.isSuccessful) {
+                    // Recargar los pedidos para mostrar el nuevo estado
+                    loadMyOrders()
+                    callback(true)
+                } else {
+                    callback(false)
+                }
+            } catch (e: Exception) {
+                callback(false)
+            }
+        }
+    }
 }
 
 sealed class OrderState {

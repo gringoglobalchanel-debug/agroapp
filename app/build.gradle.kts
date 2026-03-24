@@ -37,7 +37,7 @@ android {
 
     buildFeatures {
         viewBinding = false
-        dataBinding = false  // ← AGREGADO para evitar errores con archivos de menú
+        dataBinding = false
     }
 }
 
@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

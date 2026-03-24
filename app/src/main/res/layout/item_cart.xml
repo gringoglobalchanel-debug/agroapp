@@ -54,7 +54,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:minHeight="48dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -66,12 +67,13 @@
 
                 <ImageButton
                     android:id="@+id/btnDecrease"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:src="@drawable/ic_minus"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    app:tint="#2E7D32"
-                    android:padding="8dp" />
+                    android:padding="12dp"
+                    android:contentDescription="Disminuir cantidad"
+                    app:tint="#2E7D32" />
 
                 <TextView
                     android:id="@+id/tvCartItemQuantity"
@@ -85,12 +87,13 @@
 
                 <ImageButton
                     android:id="@+id/btnIncrease"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:src="@drawable/ic_plus"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
-                    app:tint="#2E7D32"
-                    android:padding="8dp" />
+                    android:padding="12dp"
+                    android:contentDescription="Aumentar cantidad"
+                    app:tint="#2E7D32" />
 
             </LinearLayout>
 
@@ -102,7 +105,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="end"
-            android:justifyContent="space-between">
+            android:paddingTop="8dp">
 
             <TextView
                 android:id="@+id/tvCartItemSubtotal"
@@ -111,17 +114,18 @@
                 android:text="$0.00"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#2E7D32" />
+                android:textColor="#2E7D32"
+                android:layout_marginBottom="8dp" />
 
             <ImageButton
                 android:id="@+id/btnRemove"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/ic_delete"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                app:tint="#D32F2F"
-                android:padding="4dp"
-                android:layout_marginTop="8dp" />
+                android:padding="12dp"
+                android:contentDescription="Eliminar producto"
+                app:tint="#D32F2F" />
 
         </LinearLayout>
 

@@ -18,10 +18,6 @@
             android:id="@+id/nav_cart"
             android:icon="@drawable/ic_cart"
             android:title="Carrito" />
-        <item
-            android:id="@+id/nav_driver"
-            android:icon="@drawable/ic_delivery"
-            android:title="Modo Repartidor" />
     </group>
 
     <item android:title="Opciones">

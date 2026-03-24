@@ -168,7 +168,7 @@ class DriverViewModel : ViewModel() {
 
     fun resetTakePackageState() { _takePackageState.value = null }
 
-    // ✅ ACTUALIZAR ESTADO DE UN PEDIDO (USANDO ENDPOINT DE DRIVER)
+    // ACTUALIZAR ESTADO DE UN PEDIDO - USANDO DELIVERED
     fun updateOrderStatus(orderId: String, newStatus: String) {
         viewModelScope.launch {
             try {

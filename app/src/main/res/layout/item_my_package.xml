@@ -61,7 +61,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📦 Pedidos a entregar:"
+            android:text="📦 Detalles de la Entrega:"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="#333333" />

@@ -77,7 +77,6 @@ class HomeActivity : AppCompatActivity() {
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
                 R.id.nav_orders -> startActivity(Intent(this, OrdersActivity::class.java))
                 R.id.nav_cart -> startActivity(Intent(this, CartActivity::class.java))
-                R.id.nav_driver -> startActivity(Intent(this, DriverActivity::class.java)) // NUEVO
                 R.id.nav_logout -> {
                     SessionManager.logout()
                     goToLogin()
@@ -98,7 +97,6 @@ class HomeActivity : AppCompatActivity() {
     private fun setupSearch() {
         val searchView = findViewById<AutoCompleteTextView>(R.id.searchView)
 
-        // Cargar productos
         viewModel.loadProducts()
         viewModel.products.observe(this) { products ->
             if (!products.isNullOrEmpty()) {
@@ -112,7 +110,6 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        // Al seleccionar sugerencia
         searchView.setOnItemClickListener { _, _, _, _ ->
             val query = searchView.text.toString().trim()
             if (query.isNotEmpty()) {
@@ -124,7 +121,6 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        // Al presionar buscar en teclado
         searchView.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 val query = searchView.text.toString().trim()
@@ -151,7 +147,6 @@ class HomeActivity : AppCompatActivity() {
         rvChips.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         rvChips.adapter = chipAdapter
 
-        // Reusar la observación de productos ya cargada en setupSearch()
         viewModel.products.observe(this) { products ->
             if (!products.isNullOrEmpty()) {
                 chipAdapter.updateProducts(products)
