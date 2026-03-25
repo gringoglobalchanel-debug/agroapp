@@ -4,139 +4,161 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F8F9FA">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#1B5E20"
+        android:background="#2E7D32"
         android:title="Modo Repartidor"
-        android:titleTextColor="@android:color/white" />
+        android:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/ic_back"
+        app:navigationIconTint="@android:color/white" />
 
-    <!-- Resumen de ganancias -->
-    <androidx.cardview.widget.CardView
+    <!-- Resumen de ganancias semanales -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:elevation="2dp"
+        android:padding="16dp"
         android:layout_margin="12dp"
-        android:elevation="4dp"
+        android:layout_marginTop="8dp"
         app:cardCornerRadius="12dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💰 Ganancias esta semana"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#2E7D32"
+            android:layout_marginBottom="12dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:layout_marginBottom="8dp">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:text="Total entregas:"
+                android:textSize="14sp"
+                android:textColor="#666666" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💰 Esta semana"
-                    android:textSize="12sp"
-                    android:textColor="#757575" />
-
-                <TextView
-                    android:id="@+id/tvThisWeekEarnings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="$0.00"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/tvTotalDeliveries"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:text="0"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📦 Total entregas"
-                    android:textSize="12sp"
-                    android:textColor="#757575" />
-
-                <TextView
-                    android:id="@+id/tvTotalDeliveries"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📅 Próximo pago"
-                    android:textSize="12sp"
-                    android:textColor="#757575" />
-
-                <TextView
-                    android:id="@+id/tvNextPaymentDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Viernes"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32" />
-            </LinearLayout>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-    <!-- Pestañas: Bloques disponibles / Mis bloques -->
+        <TextView
+            android:id="@+id/tvTotalTips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💸 Propinas: $0.00"
+            android:textSize="14sp"
+            android:textColor="#FF9800"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ganancia neta:"
+                android:textSize="14sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tvThisWeekEarnings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$0.00"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Próximo pago:"
+                android:textSize="12sp"
+                android:textColor="#999999" />
+
+            <TextView
+                android:id="@+id/tvNextPaymentDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Viernes 27/03"
+                android:textSize="12sp"
+                android:textColor="#999999" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Tabs para cambiar entre bloques disponibles y mis bloques -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#F1F8E9">
+        android:padding="12dp">
 
         <Button
             android:id="@+id/btnAvailableBlocks"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:backgroundTint="#2E7D32"
             android:text="Bloques disponibles"
-            android:textAllCaps="false" />
+            android:textSize="14sp"
+            android:backgroundTint="#2E7D32"
+            android:layout_marginEnd="4dp" />
 
         <Button
             android:id="@+id/btnMyBlocks"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
-            android:backgroundTint="#757575"
             android:text="Mis bloques"
-            android:textAllCaps="false" />
+            android:textSize="14sp"
+            android:backgroundTint="#9E9E9E"
+            android:layout_marginStart="4dp" />
+
     </LinearLayout>
 
+    <!-- ProgressBar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"
-        android:layout_margin="8dp" />
+        android:layout_marginTop="24dp"
+        android:visibility="gone" />
 
     <!-- Lista de bloques disponibles -->
     <androidx.recyclerview.widget.RecyclerView
@@ -144,24 +166,28 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"
-        android:visibility="visible" />
+        android:visibility="visible"
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
-    <!-- Lista de mis bloques asignados -->
+    <!-- Lista de mis bloques -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMyBlocks"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
+    <!-- Botón cerrar sesión -->
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:text="Cerrar Sesión"
+        android:textSize="14sp"
         android:backgroundTint="#757575"
-        android:layout_margin="8dp" />
+        android:layout_margin="16dp" />
 
 </LinearLayout>

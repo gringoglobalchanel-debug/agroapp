@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
@@ -232,6 +231,15 @@ class DriverActivity : AppCompatActivity() {
             formatter.format(earnings.driver_net_amount)
         findViewById<TextView>(R.id.tvTotalDeliveries).text =
             earnings.total_orders.toString()
+
+        // Mostrar propinas si existen
+        val tvTotalTips = findViewById<TextView>(R.id.tvTotalTips)
+        if (earnings.total_tips > 0) {
+            tvTotalTips.visibility = View.VISIBLE
+            tvTotalTips.text = "💸 Propinas: ${formatter.format(earnings.total_tips)}"
+        } else {
+            tvTotalTips.visibility = View.GONE
+        }
 
         val today = LocalDate.now()
         val daysUntilFriday = (5 - today.dayOfWeek.value).let { if (it <= 0) it + 7 else it }
