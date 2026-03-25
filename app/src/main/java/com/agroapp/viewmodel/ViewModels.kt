@@ -159,22 +159,16 @@ class OrderViewModel : ViewModel() {
         cartItems: Map<Product, Double>,
         paymentMethod: String,
         deliveryAddress: String,
-        notes: String?
+        notes: String?,
+        tipAmount: Double = 0.0
     ) {
-        // ========== VALIDACIÓN DE HORARIO DESACTIVADA PARA PRUEBAS ==========
-        // val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        // if (hour < 8 || hour >= 12) {
-        //     _orderState.value = OrderState.OutOfTime
-        //     return
-        // }
-
         viewModelScope.launch {
             _orderState.postValue(OrderState.Loading)
             try {
                 val items = cartItems.map { (product, qty) -> CartItem(product.id, qty) }
                 val response = api.createOrder(
                     SessionManager.getToken(),
-                    CreateOrderRequest(items, paymentMethod, deliveryAddress, notes)
+                    CreateOrderRequest(items, paymentMethod, deliveryAddress, notes, tipAmount)
                 )
                 if (response.isSuccessful) {
                     _orderState.postValue(OrderState.Success(response.body()!!))
@@ -291,7 +285,6 @@ class OrderViewModel : ViewModel() {
                     UpdateStatusRequest(newStatus)
                 )
                 if (response.isSuccessful) {
-                    // Recargar los pedidos para mostrar el nuevo estado
                     loadMyOrders()
                     callback(true)
                 } else {

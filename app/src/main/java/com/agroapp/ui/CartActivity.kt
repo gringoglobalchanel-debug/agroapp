@@ -142,7 +142,7 @@ class CartActivity : AppCompatActivity() {
                 "yappi" -> processYappiPayment()
                 else -> {
                     val deliveryAddress = SessionManager.getAddress()
-                    orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null)
+                    orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null, selectedTip)
                 }
             }
         }
@@ -380,7 +380,7 @@ class CartActivity : AppCompatActivity() {
             is PaymentSheetResult.Completed -> {
                 val cartItems = productViewModel.getCartItemsMap()
                 val deliveryAddress = SessionManager.getAddress()
-                orderViewModel.createOrder(cartItems, "card", deliveryAddress, clientSecret)
+                orderViewModel.createOrder(cartItems, "card", deliveryAddress, clientSecret, selectedTip)
             }
             is PaymentSheetResult.Canceled -> {
                 Toast.makeText(this, "Pago cancelado", Toast.LENGTH_SHORT).show()
