@@ -64,6 +64,7 @@ data class Order(
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("payment_status") val paymentStatus: String,
     @SerializedName("total_amount") val totalAmount: Double,
+    @SerializedName("tip_amount") val tipAmount: Double = 0.0,
     @SerializedName("delivery_address") val deliveryAddress: String?,
     @SerializedName("delivery_date") val deliveryDate: String,
     val notes: String?,
@@ -90,7 +91,8 @@ data class CreateOrderRequest(
     val items: List<CartItem>,
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("delivery_address") val deliveryAddress: String,
-    val notes: String?
+    val notes: String?,
+    @SerializedName("tip_amount") val tipAmount: Double = 0.0
 )
 
 data class CartItem(
@@ -226,16 +228,16 @@ data class DynamicPackage(
     val orders: List<DynamicPackageOrder>? = null
 )
 
-// CORREGIDO: Agregados campos customer_name y customer_phone
 data class DynamicPackageOrder(
     val order_id: String,
     val user_id: String,
     val delivery_address: String?,
     val total_amount: Double,
+    val tip_amount: Double = 0.0,
     val payment_method: String,
     val created_at: String,
-    val customer_name: String = "Cliente",      // NUEVO
-    val customer_phone: String = "No disponible" // NUEVO
+    val customer_name: String = "Cliente",
+    val customer_phone: String = "No disponible"
 )
 
 data class TakePackageRequest(

@@ -119,6 +119,7 @@ class MyPackageOrdersAdapter(
         private val tvCustomerPhone: TextView = itemView.findViewById(R.id.tvCustomerPhone)
         private val tvDeliveryAddress: TextView = itemView.findViewById(R.id.tvDeliveryAddress)
         private val tvTotalAmount: TextView = itemView.findViewById(R.id.tvTotalAmount)
+        private val tvTipAmount: TextView = itemView.findViewById(R.id.tvTipAmount)
         private val tvPaymentMethod: TextView = itemView.findViewById(R.id.tvPaymentMethod)
         private val tvOrderStatus: TextView = itemView.findViewById(R.id.tvOrderStatus)
         private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
@@ -128,7 +129,16 @@ class MyPackageOrdersAdapter(
             tvCustomerName.text = "👤 ${order.customer_name ?: "Cliente"}"
             tvCustomerPhone.text = "📞 ${order.customer_phone ?: "No disponible"}"
             tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
-            tvTotalAmount.text = "💰 ${formatter.format(order.total_amount)}"
+            tvTotalAmount.text = "💰 Total: ${formatter.format(order.total_amount)}"
+
+            // Mostrar propina si existe
+            if (order.tip_amount > 0) {
+                tvTipAmount.visibility = View.VISIBLE
+                tvTipAmount.text = "💸 Propina: ${formatter.format(order.tip_amount)}"
+            } else {
+                tvTipAmount.visibility = View.GONE
+            }
+
             tvPaymentMethod.text = when (order.payment_method) {
                 "card" -> "💳 Tarjeta"
                 "cash" -> "💵 Efectivo"

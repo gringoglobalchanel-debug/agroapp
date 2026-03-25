@@ -69,7 +69,6 @@ class AvailablePackagesAdapter(
                     onOrderStatusChange(orderId, newStatus, photoUri)
                 },
                 onTakePhotoClick = { orderId, position ->
-                    // Ahora ordersAdapter ya está inicializado
                     onTakePhotoClick(orderId, position, ordersAdapter)
                 },
                 isAvailable = isAvailable
@@ -132,6 +131,7 @@ class PackageOrderAdapter(
         private val tvCustomerPhone: TextView = itemView.findViewById(R.id.tvCustomerPhone)
         private val tvDeliveryAddress: TextView = itemView.findViewById(R.id.tvDeliveryAddress)
         private val tvTotalAmount: TextView = itemView.findViewById(R.id.tvTotalAmount)
+        private val tvTipAmount: TextView = itemView.findViewById(R.id.tvTipAmount)
         private val tvOrderStatus: TextView = itemView.findViewById(R.id.tvOrderStatus)
         private val btnMarkPending: Button = itemView.findViewById(R.id.btnMarkPending)
         private val btnMarkDelivered: Button = itemView.findViewById(R.id.btnMarkDelivered)
@@ -142,7 +142,15 @@ class PackageOrderAdapter(
             tvCustomerName.text = "👤 ${order.customer_name.ifEmpty { "Cliente" }}"
             tvCustomerPhone.text = "📞 ${order.customer_phone.ifEmpty { "No disponible" }}"
             tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
-            tvTotalAmount.text = formatter.format(order.total_amount)
+            tvTotalAmount.text = "💰 Total: ${formatter.format(order.total_amount)}"
+
+            // Mostrar propina si existe
+            if (order.tip_amount > 0) {
+                tvTipAmount.visibility = View.VISIBLE
+                tvTipAmount.text = "💸 Propina: ${formatter.format(order.tip_amount)}"
+            } else {
+                tvTipAmount.visibility = View.GONE
+            }
 
             // Si es "Bloques disponibles", ocultar estado y botones
             if (isAvailable) {
