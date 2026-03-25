@@ -160,7 +160,9 @@ class OrderViewModel : ViewModel() {
         paymentMethod: String,
         deliveryAddress: String,
         notes: String?,
-        tipAmount: Double = 0.0
+        tipAmount: Double = 0.0,
+        latitude: Double? = null,
+        longitude: Double? = null
     ) {
         viewModelScope.launch {
             _orderState.postValue(OrderState.Loading)
@@ -168,7 +170,15 @@ class OrderViewModel : ViewModel() {
                 val items = cartItems.map { (product, qty) -> CartItem(product.id, qty) }
                 val response = api.createOrder(
                     SessionManager.getToken(),
-                    CreateOrderRequest(items, paymentMethod, deliveryAddress, notes, tipAmount)
+                    CreateOrderRequest(
+                        items = items,
+                        paymentMethod = paymentMethod,
+                        deliveryAddress = deliveryAddress,
+                        deliveryLatitude = latitude,
+                        deliveryLongitude = longitude,
+                        notes = notes,
+                        tipAmount = tipAmount
+                    )
                 )
                 if (response.isSuccessful) {
                     _orderState.postValue(OrderState.Success(response.body()!!))

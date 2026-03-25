@@ -66,6 +66,8 @@ data class Order(
     @SerializedName("total_amount") val totalAmount: Double,
     @SerializedName("tip_amount") val tipAmount: Double = 0.0,
     @SerializedName("delivery_address") val deliveryAddress: String?,
+    @SerializedName("delivery_latitude") val deliveryLatitude: Double? = null,
+    @SerializedName("delivery_longitude") val deliveryLongitude: Double? = null,
     @SerializedName("delivery_date") val deliveryDate: String,
     val notes: String?,
     @SerializedName("created_at") val createdAt: String,
@@ -91,6 +93,8 @@ data class CreateOrderRequest(
     val items: List<CartItem>,
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("delivery_address") val deliveryAddress: String,
+    @SerializedName("delivery_latitude") val deliveryLatitude: Double? = null,
+    @SerializedName("delivery_longitude") val deliveryLongitude: Double? = null,
     val notes: String?,
     @SerializedName("tip_amount") val tipAmount: Double = 0.0
 )
@@ -232,6 +236,8 @@ data class DynamicPackageOrder(
     val order_id: String,
     val user_id: String,
     val delivery_address: String?,
+    val delivery_latitude: Double? = null,
+    val delivery_longitude: Double? = null,
     val total_amount: Double,
     val tip_amount: Double = 0.0,
     val payment_method: String,
@@ -248,6 +254,7 @@ data class TakePackageResponse(
     val message: String,
     @SerializedName("package") val packageData: DynamicPackage,
     val driver_payment: Double,
+    val total_tips: Double = 0.0,
     val platform_fee: Double,
     val total_orders: Int
 )
@@ -256,6 +263,7 @@ data class DriverPackageEarnings(
     val total_packages: Int,
     val total_orders: Int,
     val total_amount: Double,
+    val total_tips: Double = 0.0,
     val platform_commission: Double,
     val driver_net_amount: Double,
     val next_payment_date: String
