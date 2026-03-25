@@ -55,6 +55,17 @@
         android:textColor="#757575"
         android:layout_marginTop="4dp" />
 
+    <!-- NUEVO: Campo para mostrar la propina -->
+    <TextView
+        android:id="@+id/tvTipAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💸 Propina: $0.00"
+        android:textSize="12sp"
+        android:textColor="#FF9800"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/tvOrderStatus"
         android:layout_width="wrap_content"
