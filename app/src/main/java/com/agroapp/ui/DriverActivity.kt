@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
@@ -46,6 +48,8 @@ class DriverActivity : AppCompatActivity() {
     var pendingPhotoAdapterForMyPackages: MyPackageOrdersAdapter? = null
     private var pendingPhotoFile: File? = null
 
+    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+
     // Lanzador para el resultado de la cámara
     private val takePhotoLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -58,7 +62,6 @@ class DriverActivity : AppCompatActivity() {
             val photoFile = pendingPhotoFile
 
             if (orderId != null && position >= 0 && photoFile != null && photoFile.exists()) {
-                // Mostrar diálogo con la foto
                 showPhotoConfirmationDialog(
                     orderId = orderId,
                     position = position,
@@ -118,7 +121,6 @@ class DriverActivity : AppCompatActivity() {
             toolbar.setSubtitleTextColor(resources.getColor(android.R.color.white, theme))
         }
 
-        // Adaptador para Bloques Disponibles
         availablePackagesAdapter = AvailablePackagesAdapter(
             onTakeClick = { packageItem ->
                 showTakePackageDialog(packageItem)
@@ -135,7 +137,6 @@ class DriverActivity : AppCompatActivity() {
             }
         )
 
-        // Adaptador para Mis Bloques
         myPackagesAdapter = MyPackagesAdapter { orderId, position, adapter ->
             pendingPhotoOrderId = orderId
             pendingPhotoPosition = position
@@ -179,11 +180,7 @@ class DriverActivity : AppCompatActivity() {
                     Toast.makeText(this, "Procesando...", Toast.LENGTH_SHORT).show()
                 }
                 is TakePackageState.Success -> {
-                    Toast.makeText(
-                        this,
-                        "${state.message}\nPago: ${formatter.format(state.payment)}\nTotal pedidos: ${state.totalOrders}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this, "${state.message}\nTotal pedidos: ${state.totalOrders}", Toast.LENGTH_LONG).show()
                     viewModel.resetTakePackageState()
                 }
                 is TakePackageState.Error -> {
@@ -194,8 +191,6 @@ class DriverActivity : AppCompatActivity() {
             }
         })
     }
-
-    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
     private fun setupButtons() {
         val btnAvailable = findViewById<Button>(R.id.btnAvailableBlocks)
@@ -232,7 +227,6 @@ class DriverActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvTotalDeliveries).text =
             earnings.total_orders.toString()
 
-        // Mostrar propinas si existen
         val tvTotalTips = findViewById<TextView>(R.id.tvTotalTips)
         if (earnings.total_tips > 0) {
             tvTotalTips.visibility = View.VISIBLE
@@ -329,10 +323,8 @@ class DriverActivity : AppCompatActivity() {
         adapterForMyPackages: MyPackageOrdersAdapter?,
         photoFile: File
     ) {
-        // Cargar la foto
         val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
 
-        // Crear vista personalizada para el diálogo
         val dialogView = layoutInflater.inflate(R.layout.dialog_photo_confirmation, null)
         val imageView = dialogView.findViewById<ImageView>(R.id.ivPhotoPreview)
         imageView.setImageBitmap(bitmap)
@@ -342,32 +334,29 @@ class DriverActivity : AppCompatActivity() {
             .setView(dialogView)
             .setMessage("¿Confirmas que este pedido fue entregado correctamente?")
             .setPositiveButton("Aceptar entrega") { _, _ ->
-                // Actualizar estado del pedido
                 viewModel.updateOrderStatus(orderId, "completed")
                 Toast.makeText(this, "✅ Pedido entregado correctamente", Toast.LENGTH_SHORT).show()
 
-                // Remover el pedido del adaptador correspondiente
                 if (adapter != null) {
                     adapter.removeOrder(position)
                 } else if (adapterForMyPackages != null) {
                     adapterForMyPackages.removeOrder(position)
                 }
 
-                // Eliminar el archivo de foto temporal
                 photoFile.delete()
-
                 clearPendingPhoto()
-
-                // Recargar la lista de mis paquetes para actualizar la vista
                 viewModel.loadMyPackages()
+
+                // Delay para asegurar que la base de datos se actualice antes de recargar ganancias
+                Handler(Looper.getMainLooper()).postDelayed({
+                    viewModel.loadPackageEarnings()
+                }, 500)
             }
             .setNegativeButton("Reintentar") { _, _ ->
-                // Volver a abrir la cámara
                 photoFile.delete()
                 checkCameraPermissionAndOpen()
             }
             .setNeutralButton("Cancelar") { _, _ ->
-                // Cancelar, no hacer nada
                 Toast.makeText(this, "Entrega cancelada", Toast.LENGTH_SHORT).show()
                 clearPendingPhoto()
                 photoFile.delete()

@@ -151,7 +151,6 @@ class DriverViewModel : ViewModel() {
                     val data = response.body()
                     _takePackageState.value = TakePackageState.Success(
                         data?.message ?: "Paquete tomado exitosamente",
-                        data?.driver_payment ?: 0.0,
                         data?.total_orders ?: 0
                     )
                     loadAvailablePackages()
@@ -168,7 +167,7 @@ class DriverViewModel : ViewModel() {
 
     fun resetTakePackageState() { _takePackageState.value = null }
 
-    // ACTUALIZAR ESTADO DE UN PEDIDO - USANDO DELIVERED
+    // ACTUALIZAR ESTADO DE UN PEDIDO
     fun updateOrderStatus(orderId: String, newStatus: String) {
         viewModelScope.launch {
             try {
@@ -179,7 +178,8 @@ class DriverViewModel : ViewModel() {
                 )
                 if (response.isSuccessful) {
                     android.util.Log.d("DriverViewModel", "✅ Pedido $orderId actualizado a $newStatus")
-                    loadMyPackages() // Recargar lista después de actualizar
+                    loadMyPackages()
+                    // NO llamar a loadPackageEarnings() aquí - se hará desde DriverActivity con delay
                 } else {
                     android.util.Log.e("DriverViewModel", "❌ Error al actualizar pedido: ${response.code()} - ${response.errorBody()?.string()}")
                 }
@@ -198,6 +198,6 @@ sealed class TakeBlockState {
 
 sealed class TakePackageState {
     object Loading : TakePackageState()
-    data class Success(val message: String, val payment: Double, val totalOrders: Int) : TakePackageState()
+    data class Success(val message: String, val totalOrders: Int) : TakePackageState()
     data class Error(val message: String) : TakePackageState()
 }
