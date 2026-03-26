@@ -1,11 +1,13 @@
 ﻿package com.agroapp.ui
 
 import android.content.Intent
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +24,7 @@ import com.agroapp.viewmodel.ProductViewModel
 import com.stripe.android.PaymentConfiguration
 import com.stripe.android.paymentsheet.PaymentSheet
 import com.stripe.android.paymentsheet.PaymentSheetResult
+import java.util.Locale
 
 class CartActivity : AppCompatActivity() {
 
@@ -34,9 +37,28 @@ class CartActivity : AppCompatActivity() {
     private var pendingYappiCode: String? = null
     private var pendingTotal: Double = 0.0
     private var selectedTip: Double = 0.0
+    private var pendingLatitude: Double? = null
+    private var pendingLongitude: Double? = null
+    private var selectedAddress: String = ""
 
     companion object {
         const val DELIVERY_FEE = 2.50
+    }
+
+    private val mapLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data = result.data
+            pendingLatitude = data?.getDoubleExtra(MapsActivity.EXTRA_LATITUDE, 0.0)?.takeIf { it != 0.0 }
+            pendingLongitude = data?.getDoubleExtra(MapsActivity.EXTRA_LONGITUDE, 0.0)?.takeIf { it != 0.0 }
+            selectedAddress = data?.getStringExtra(MapsActivity.EXTRA_ADDRESS) ?: ""
+
+            val tvDeliveryAddress = findViewById<TextView>(R.id.tvDeliveryAddress)
+            if (selectedAddress.isNotEmpty()) {
+                tvDeliveryAddress.text = selectedAddress
+            } else if (pendingLatitude != null && pendingLongitude != null) {
+                tvDeliveryAddress.text = "📍 ${"%.6f".format(pendingLatitude!!)}, ${"%.6f".format(pendingLongitude!!)}"
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +76,8 @@ class CartActivity : AppCompatActivity() {
         val tvTotal = findViewById<TextView>(R.id.tvTotal)
         val tvSelectedTip = findViewById<TextView>(R.id.tvSelectedTip)
         val layoutSelectedTip = findViewById<LinearLayout>(R.id.layoutSelectedTip)
+        val tvDeliveryAddress = findViewById<TextView>(R.id.tvDeliveryAddress)
+        val btnSelectLocation = findViewById<Button>(R.id.btnSelectLocation)
 
         // Botones de propina
         val btnTip1 = findViewById<Button>(R.id.btnTip1)
@@ -70,6 +94,18 @@ class CartActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         tvDeliveryFee.text = "$${"%.2f".format(DELIVERY_FEE)}"
+
+        // Mostrar dirección guardada
+        val savedAddress = SessionManager.getAddress()
+        tvDeliveryAddress.text = if (savedAddress.isNotEmpty()) savedAddress else "Agrega tu dirección de entrega"
+
+        // Botón para seleccionar ubicación en mapa
+        btnSelectLocation.setOnClickListener {
+            val intent = Intent(this, MapsActivity::class.java)
+            pendingLatitude?.let { intent.putExtra("latitude", it) }
+            pendingLongitude?.let { intent.putExtra("longitude", it) }
+            mapLauncher.launch(intent)
+        }
 
         adapter = CartAdapter(
             cartItems = emptyMap(),
@@ -131,18 +167,23 @@ class CartActivity : AppCompatActivity() {
             }
 
             val cartItems = productViewModel.getCartItemsMap()
+            val deliveryAddress = if (selectedAddress.isNotEmpty()) selectedAddress else tvDeliveryAddress.text.toString()
 
             if (cartItems.isEmpty()) {
                 Toast.makeText(this, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            if (deliveryAddress.isEmpty() || deliveryAddress == "Agrega tu dirección de entrega") {
+                Toast.makeText(this, "Por favor selecciona una dirección de entrega", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             when (paymentMethod) {
-                "card" -> processCardPayment()
-                "yappi" -> processYappiPayment()
+                "card" -> processCardPayment(pendingLatitude, pendingLongitude, deliveryAddress)
+                "yappi" -> processYappiPayment(pendingLatitude, pendingLongitude, deliveryAddress)
                 else -> {
-                    val deliveryAddress = SessionManager.getAddress()
-                    orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null, selectedTip)
+                    orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null, selectedTip, pendingLatitude, pendingLongitude)
                 }
             }
         }
@@ -178,6 +219,22 @@ class CartActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun getCoordinatesFromAddress(address: String, callback: (Double?, Double?) -> Unit) {
+        try {
+            val geocoder = Geocoder(this, Locale.getDefault())
+            val addresses = geocoder.getFromLocationName(address, 1)
+            if (addresses != null && addresses.isNotEmpty()) {
+                val location = addresses[0]
+                callback(location.latitude, location.longitude)
+            } else {
+                callback(null, null)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            callback(null, null)
+        }
     }
 
     private fun getProductsTotal(): Double {
@@ -237,7 +294,7 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun processCardPayment() {
+    private fun processCardPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
 
         if (finalTotal <= 0) {
@@ -248,14 +305,16 @@ class CartActivity : AppCompatActivity() {
         orderViewModel.createPaymentIntent(finalTotal) { success, secret ->
             if (success && secret != null) {
                 clientSecret = secret
-                presentPaymentSheet()
+                pendingLatitude = latitude
+                pendingLongitude = longitude
+                presentPaymentSheet(deliveryAddress)
             } else {
                 Toast.makeText(this, "Error iniciando pago", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun processYappiPayment() {
+    private fun processYappiPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
 
         if (finalTotal <= 0) {
@@ -264,26 +323,27 @@ class CartActivity : AppCompatActivity() {
         }
 
         pendingTotal = finalTotal
+        pendingLatitude = latitude
+        pendingLongitude = longitude
 
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
 
         val cartItems = productViewModel.getCartItemsMap()
-        val deliveryAddress = SessionManager.getAddress()
         orderViewModel.createPendingYappiOrder(cartItems, deliveryAddress) { success, orderId, referenceCode ->
             progressBar.visibility = View.GONE
 
             if (success && orderId != null && referenceCode != null) {
                 pendingYappiOrderId = orderId
                 pendingYappiCode = referenceCode
-                showYappiPaymentDialog(finalTotal, referenceCode, orderId)
+                showYappiPaymentDialog(finalTotal, referenceCode, orderId, deliveryAddress)
             } else {
                 Toast.makeText(this, "Error al procesar el pedido. Intenta de nuevo.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun showYappiPaymentDialog(total: Double, referenceCode: String, orderId: String) {
+    private fun showYappiPaymentDialog(total: Double, referenceCode: String, orderId: String, deliveryAddress: String) {
         val yappiPhone = "50760000000"
         val productsTotal = total - DELIVERY_FEE - selectedTip
 
@@ -298,6 +358,7 @@ class CartActivity : AppCompatActivity() {
                 💰 Propina: $${"%.2f".format(selectedTip)}
                 💵 Total: $${"%.2f".format(total)}
                 📝 Referencia: $referenceCode
+                📍 Dirección: $deliveryAddress
                 
                 Luego presiona "YA PAGUÉ" para confirmar tu pedido.
             """.trimIndent())
@@ -368,7 +429,7 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun presentPaymentSheet() {
+    private fun presentPaymentSheet(deliveryAddress: String) {
         clientSecret?.let { secret ->
             val configuration = PaymentSheet.Configuration("AgroApp Grün")
             paymentSheet.presentWithPaymentIntent(secret, configuration)
@@ -379,8 +440,11 @@ class CartActivity : AppCompatActivity() {
         when (paymentSheetResult) {
             is PaymentSheetResult.Completed -> {
                 val cartItems = productViewModel.getCartItemsMap()
-                val deliveryAddress = SessionManager.getAddress()
-                orderViewModel.createOrder(cartItems, "card", deliveryAddress, clientSecret, selectedTip)
+                val deliveryAddress = if (selectedAddress.isNotEmpty()) selectedAddress else findViewById<TextView>(R.id.tvDeliveryAddress).text.toString()
+                orderViewModel.createOrder(
+                    cartItems, "card", deliveryAddress, clientSecret,
+                    selectedTip, pendingLatitude, pendingLongitude
+                )
             }
             is PaymentSheetResult.Canceled -> {
                 Toast.makeText(this, "Pago cancelado", Toast.LENGTH_SHORT).show()
