@@ -2,6 +2,8 @@
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
@@ -11,17 +13,22 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.agroapp.R
+import com.agroapp.model.ActiveOrderResponse
 import com.agroapp.model.Banner
+import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.ProductViewModel
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.textview.MaterialTextView
+import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
 
@@ -29,6 +36,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
     private lateinit var chipAdapter: ProductChipAdapter
+    private lateinit var cardActiveOrder: CardView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,11 +57,20 @@ class HomeActivity : AppCompatActivity() {
         setupCart()
         setupBannerCarousel()
         setupFooter()
+        checkActiveOrder()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (SessionManager.isLoggedIn()) {
+            checkActiveOrder()
+        }
     }
 
     private fun initViews() {
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
+        cardActiveOrder = findViewById(R.id.cardActiveOrder)
 
         val headerView = navigationView.getHeaderView(0)
         val tvHeaderName = headerView.findViewById<MaterialTextView>(R.id.tvHeaderName)
@@ -61,6 +78,43 @@ class HomeActivity : AppCompatActivity() {
 
         tvHeaderName.text = SessionManager.getUserName()
         tvHeaderEmail.text = SessionManager.getUserEmail()
+    }
+
+    private fun checkActiveOrder() {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.instance.getActiveOrder(
+                    token = SessionManager.getToken() // getToken() ya incluye "Bearer ..."
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    val order = response.body()!!
+                    if (order.driver_id != null) {
+                        showActiveOrderBanner(order)
+                    } else {
+                        cardActiveOrder.visibility = View.GONE
+                    }
+                } else {
+                    cardActiveOrder.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error verificando pedido activo: ${e.message}")
+                cardActiveOrder.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun showActiveOrderBanner(order: ActiveOrderResponse) {
+        cardActiveOrder.visibility = View.VISIBLE
+        cardActiveOrder.setOnClickListener {
+            val intent = Intent(this, TrackingActivity::class.java).apply {
+                putExtra("order_id", order.id)
+                putExtra("driver_id", order.driver_id)
+                putExtra("order_total", order.total)
+                putExtra("delivery_lat", order.delivery_lat ?: 0.0)
+                putExtra("delivery_lng", order.delivery_lng ?: 0.0)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun setupDrawer() {

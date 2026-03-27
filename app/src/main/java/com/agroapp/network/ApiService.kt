@@ -52,6 +52,11 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<List<Order>>
 
+    @GET("orders/active")
+    suspend fun getActiveOrder(
+        @Header("Authorization") token: String
+    ): Response<ActiveOrderResponse>
+
     @PATCH("orders/{id}/cancel")
     suspend fun cancelOrder(
         @Header("Authorization") token: String,
@@ -169,6 +174,12 @@ interface ApiService {
     suspend fun getDriverLocation(
         @Header("Authorization") token: String,
         @Path("orderId") orderId: String
+    ): Response<DriverLocationResponse>
+
+    @GET("driver/location/by-driver/{driverId}")
+    suspend fun getDriverLocationByDriver(
+        @Header("Authorization") token: String,
+        @Path("driverId") driverId: Int
     ): Response<DriverLocationResponse>
 
     // ==================== ADMIN ====================
