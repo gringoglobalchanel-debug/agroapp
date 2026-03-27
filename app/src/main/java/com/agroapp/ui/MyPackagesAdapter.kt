@@ -14,64 +14,61 @@ import java.text.NumberFormat
 import java.util.Locale
 
 class MyPackagesAdapter(
-    private val onTakePhotoClick: (String, Int, MyPackageOrdersAdapter) -> Unit
-) : RecyclerView.Adapter<MyPackagesAdapter.ViewHolder>() {
+    private val onConfirmClick: (orderId: String, position: Int, adapter: MyPackageOrdersAdapter) -> Unit,
+    private val onStartTripClick: (DynamicPackageOrder) -> Unit,
+    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit
+) : RecyclerView.Adapter<MyPackagesAdapter.PackageViewHolder>() {
 
     private var packages: List<DynamicPackage> = emptyList()
+    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
     fun submitList(list: List<DynamicPackage>) {
-        // Filtrar paquetes que tienen al menos un pedido (no vacíos)
-        val nonEmptyPackages = list.filter { it.orders?.isNotEmpty() == true }
-        packages = nonEmptyPackages
+        packages = list
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PackageViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_my_package, parent, false)
-        return ViewHolder(view)
+        return PackageViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(packages[position])
+    override fun onBindViewHolder(holder: PackageViewHolder, position: Int) {
+        val packageItem = packages[position]
+        holder.bind(packageItem)
     }
 
-    override fun getItemCount() = packages.size
+    override fun getItemCount(): Int = packages.size
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val tvSize: TextView = itemView.findViewById(R.id.tvPackageSize)
-        private val tvOrders: TextView = itemView.findViewById(R.id.tvOrdersCount)
+    inner class PackageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvPackageSize: TextView = itemView.findViewById(R.id.tvPackageSize)
+        private val tvOrdersCount: TextView = itemView.findViewById(R.id.tvOrdersCount)
         private val tvStatus: TextView = itemView.findViewById(R.id.tvStatus)
         private val tvTakenAt: TextView = itemView.findViewById(R.id.tvTakenAt)
-        private val rvOrders: RecyclerView = itemView.findViewById(R.id.rvOrdersInMyPackage)
+        private val rvOrdersInMyPackage: RecyclerView = itemView.findViewById(R.id.rvOrdersInMyPackage)
 
         fun bind(packageItem: DynamicPackage) {
-            tvSize.text = "Paquete #${packageItem.id.takeLast(8)}"
-            tvOrders.text = "${packageItem.current_size} pedidos"
+            tvPackageSize.text = "Paquete #${packageItem.id.takeLast(8)}"
+            tvOrdersCount.text = "${packageItem.current_size} pedidos"
 
-            val statusText = when (packageItem.status) {
-                "taken" -> "✅ En reparto"
-                "available" -> "Disponible"
-                "forming" -> "Formándose"
-                else -> packageItem.status
+            when (packageItem.status) {
+                "available" -> tvStatus.text = "✅ Disponible"
+                "taken" -> tvStatus.text = "🚚 En camino"
+                "completed" -> tvStatus.text = "✅ Completado"
+                else -> tvStatus.text = packageItem.status
             }
-            tvStatus.text = statusText
 
-            tvTakenAt.text = packageItem.taken_at?.let {
-                "Tomado: ${formatDate(it)}"
-            } ?: "Pendiente"
+            if (packageItem.taken_at != null) {
+                tvTakenAt.visibility = View.VISIBLE
+                tvTakenAt.text = "Tomado: ${formatDate(packageItem.taken_at)}"
+            } else {
+                tvTakenAt.visibility = View.GONE
+            }
 
-            // Crear adaptador de pedidos con callback para la foto
-            lateinit var ordersAdapter: MyPackageOrdersAdapter
-
-            ordersAdapter = MyPackageOrdersAdapter(
-                orders = packageItem.orders ?: emptyList(),
-                onTakePhotoClick = { orderId, position ->
-                    onTakePhotoClick(orderId, position, ordersAdapter)
-                }
-            )
-            rvOrders.layoutManager = LinearLayoutManager(itemView.context)
-            rvOrders.adapter = ordersAdapter
+            val orders = packageItem.orders ?: emptyList()
+            val adapter = MyPackageOrdersAdapter(orders, onConfirmClick, onStartTripClick, onWhatsAppClick)
+            rvOrdersInMyPackage.layoutManager = LinearLayoutManager(itemView.context)
+            rvOrdersInMyPackage.adapter = adapter
         }
 
         private fun formatDate(dateString: String): String {
@@ -86,13 +83,19 @@ class MyPackagesAdapter(
     }
 }
 
-// Adapter para los pedidos dentro de mis paquetes tomados
 class MyPackageOrdersAdapter(
     private val orders: List<DynamicPackageOrder>,
-    private val onTakePhotoClick: (String, Int) -> Unit
+    private val onConfirmClick: (orderId: String, position: Int, adapter: MyPackageOrdersAdapter) -> Unit,
+    private val onStartTripClick: (DynamicPackageOrder) -> Unit,
+    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit
 ) : RecyclerView.Adapter<MyPackageOrdersAdapter.OrderViewHolder>() {
 
-    private var ordersList: MutableList<DynamicPackageOrder> = orders.toMutableList()
+    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+
+    fun removeOrder(position: Int) {
+        (orders as MutableList).removeAt(position)
+        notifyItemRemoved(position)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -101,37 +104,35 @@ class MyPackageOrdersAdapter(
     }
 
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
-        holder.bind(ordersList[position], position)
+        val order = orders[position]
+        holder.bind(order, position)
     }
 
-    override fun getItemCount() = ordersList.size
-
-    fun removeOrder(position: Int) {
-        if (position >= 0 && position < ordersList.size) {
-            ordersList.removeAt(position)
-            notifyItemRemoved(position)
-            notifyItemRangeChanged(position, ordersList.size)
-        }
-    }
+    override fun getItemCount(): Int = orders.size
 
     inner class OrderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvCustomerName: TextView = itemView.findViewById(R.id.tvCustomerName)
         private val tvCustomerPhone: TextView = itemView.findViewById(R.id.tvCustomerPhone)
         private val tvDeliveryAddress: TextView = itemView.findViewById(R.id.tvDeliveryAddress)
         private val tvTotalAmount: TextView = itemView.findViewById(R.id.tvTotalAmount)
-        private val tvTipAmount: TextView = itemView.findViewById(R.id.tvTipAmount)
         private val tvPaymentMethod: TextView = itemView.findViewById(R.id.tvPaymentMethod)
+        private val tvTipAmount: TextView = itemView.findViewById(R.id.tvTipAmount)
         private val tvOrderStatus: TextView = itemView.findViewById(R.id.tvOrderStatus)
+        private val btnStartTrip: Button = itemView.findViewById(R.id.btnStartTrip)
         private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
+        private val btnWhatsApp: Button = itemView.findViewById(R.id.btnWhatsApp)
 
         fun bind(order: DynamicPackageOrder, position: Int) {
-            val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-            tvCustomerName.text = "👤 ${order.customer_name ?: "Cliente"}"
-            tvCustomerPhone.text = "📞 ${order.customer_phone ?: "No disponible"}"
+            tvCustomerName.text = "👤 ${order.customer_name}"
+            tvCustomerPhone.text = "📞 ${order.customer_phone}"
             tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
-            tvTotalAmount.text = "💰 Total: ${formatter.format(order.total_amount)}"
+            tvTotalAmount.text = formatter.format(order.total_amount)
+            tvPaymentMethod.text = when (order.payment_method) {
+                "card" -> "💳 Tarjeta"
+                "yappi" -> "📱 YAPPI"
+                else -> "💰 Efectivo"
+            }
 
-            // Mostrar propina si existe
             if (order.tip_amount > 0) {
                 tvTipAmount.visibility = View.VISIBLE
                 tvTipAmount.text = "💸 Propina: ${formatter.format(order.tip_amount)}"
@@ -139,20 +140,18 @@ class MyPackageOrdersAdapter(
                 tvTipAmount.visibility = View.GONE
             }
 
-            tvPaymentMethod.text = when (order.payment_method) {
-                "card" -> "💳 Tarjeta"
-                "cash" -> "💵 Efectivo"
-                "yappi" -> "📱 Yappi"
-                else -> order.payment_method ?: ""
+            tvOrderStatus.text = "📦 Pendiente"
+
+            btnStartTrip.setOnClickListener {
+                onStartTripClick(order)
             }
 
-            // Estado del pedido
-            tvOrderStatus.text = "🚚 En camino"
-            tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_orange_light))
-
-            // Botón de confirmar entrega
             btnTakePhoto.setOnClickListener {
-                onTakePhotoClick(order.order_id, position)
+                onConfirmClick(order.order_id, position, this@MyPackageOrdersAdapter)
+            }
+
+            btnWhatsApp.setOnClickListener {
+                onWhatsAppClick(order)
             }
         }
     }

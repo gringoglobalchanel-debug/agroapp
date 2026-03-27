@@ -55,7 +55,6 @@
         android:textColor="#757575"
         android:layout_marginTop="4dp" />
 
-    <!-- NUEVO: Campo para mostrar la propina -->
     <TextView
         android:id="@+id/tvTipAmount"
         android:layout_width="match_parent"
@@ -115,6 +114,16 @@
             android:text="📸 Foto"
             android:textSize="12sp"
             android:backgroundTint="#2196F3"
+            android:layout_marginStart="4dp" />
+
+        <Button
+            android:id="@+id/btnWhatsApp"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="💬 WhatsApp"
+            android:textSize="12sp"
+            android:backgroundTint="#25D366"
             android:layout_marginStart="4dp" />
 
     </LinearLayout>

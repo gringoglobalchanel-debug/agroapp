@@ -48,15 +48,19 @@ class CartActivity : AppCompatActivity() {
     private val mapLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val data = result.data
-            pendingLatitude = data?.getDoubleExtra(MapsActivity.EXTRA_LATITUDE, 0.0)?.takeIf { it != 0.0 }
-            pendingLongitude = data?.getDoubleExtra(MapsActivity.EXTRA_LONGITUDE, 0.0)?.takeIf { it != 0.0 }
-            selectedAddress = data?.getStringExtra(MapsActivity.EXTRA_ADDRESS) ?: ""
+            pendingLatitude = data?.getDoubleExtra("latitude", 0.0)?.takeIf { it != 0.0 }
+            pendingLongitude = data?.getDoubleExtra("longitude", 0.0)?.takeIf { it != 0.0 }
+            selectedAddress = data?.getStringExtra("address") ?: ""
 
             val tvDeliveryAddress = findViewById<TextView>(R.id.tvDeliveryAddress)
             if (selectedAddress.isNotEmpty()) {
                 tvDeliveryAddress.text = selectedAddress
             } else if (pendingLatitude != null && pendingLongitude != null) {
                 tvDeliveryAddress.text = "📍 ${"%.6f".format(pendingLatitude!!)}, ${"%.6f".format(pendingLongitude!!)}"
+            }
+
+            if (pendingLatitude != null && pendingLongitude != null) {
+                SessionManager.saveDeliveryLocation(pendingLatitude!!, pendingLongitude!!, selectedAddress)
             }
         }
     }
@@ -79,7 +83,6 @@ class CartActivity : AppCompatActivity() {
         val tvDeliveryAddress = findViewById<TextView>(R.id.tvDeliveryAddress)
         val btnSelectLocation = findViewById<Button>(R.id.btnSelectLocation)
 
-        // Botones de propina
         val btnTip1 = findViewById<Button>(R.id.btnTip1)
         val btnTip3 = findViewById<Button>(R.id.btnTip3)
         val btnTip5 = findViewById<Button>(R.id.btnTip5)
@@ -95,11 +98,9 @@ class CartActivity : AppCompatActivity() {
 
         tvDeliveryFee.text = "$${"%.2f".format(DELIVERY_FEE)}"
 
-        // Mostrar dirección guardada
         val savedAddress = SessionManager.getAddress()
         tvDeliveryAddress.text = if (savedAddress.isNotEmpty()) savedAddress else "Agrega tu dirección de entrega"
 
-        // Botón para seleccionar ubicación en mapa
         btnSelectLocation.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
             pendingLatitude?.let { intent.putExtra("latitude", it) }
@@ -123,7 +124,6 @@ class CartActivity : AppCompatActivity() {
             updateCartUI(cartMap ?: emptyMap(), tvEmpty, rvCartItems, tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
         })
 
-        // Botones de propina
         btnTip1.setOnClickListener {
             selectedTip = 1.0
             updateTipUI(btnTip1, btnTip1, btnTip3, btnTip5, etCustomTip, tvSelectedTip, layoutSelectedTip)
@@ -221,19 +221,18 @@ class CartActivity : AppCompatActivity() {
         })
     }
 
-    private fun getCoordinatesFromAddress(address: String, callback: (Double?, Double?) -> Unit) {
-        try {
-            val geocoder = Geocoder(this, Locale.getDefault())
-            val addresses = geocoder.getFromLocationName(address, 1)
-            if (addresses != null && addresses.isNotEmpty()) {
-                val location = addresses[0]
-                callback(location.latitude, location.longitude)
-            } else {
-                callback(null, null)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            callback(null, null)
+    override fun onResume() {
+        super.onResume()
+        val savedLat = SessionManager.getDeliveryLatitude()
+        val savedLng = SessionManager.getDeliveryLongitude()
+        val savedAddress = SessionManager.getAddress()
+
+        if (savedLat != 0.0 && savedLng != 0.0) {
+            pendingLatitude = savedLat
+            pendingLongitude = savedLng
+            selectedAddress = savedAddress
+            findViewById<TextView>(R.id.tvDeliveryAddress).text =
+                if (savedAddress.isNotEmpty()) savedAddress else "📍 ${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
         }
     }
 

@@ -43,13 +43,17 @@ object SessionManager {
     private const val KEY_USER_PHONE = "phone"
     private const val KEY_USER_TYPE = "user_type"
 
+    // Nuevas keys para ubicación de entrega
+    private const val KEY_DELIVERY_LAT = "delivery_lat"
+    private const val KEY_DELIVERY_LNG = "delivery_lng"
+    private const val KEY_DELIVERY_ADDRESS = "delivery_address"
+
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    // CORREGIDO: Ahora acepta userType como parámetro
     fun saveSession(
         token: String,
         userId: String,
@@ -57,7 +61,7 @@ object SessionManager {
         email: String,
         role: String,
         address: String?,
-        userType: String = "cliente"  // NUEVO PARÁMETRO
+        userType: String = "cliente"
     ) {
         prefs.edit()
             .putString(KEY_TOKEN, token)
@@ -66,7 +70,7 @@ object SessionManager {
             .putString(KEY_USER_EMAIL, email)
             .putString(KEY_USER_ROLE, role)
             .putString(KEY_USER_ADDRESS, address ?: "")
-            .putString(KEY_USER_TYPE, userType)  // GUARDAR userType
+            .putString(KEY_USER_TYPE, userType)
             .apply()
     }
 
@@ -77,6 +81,38 @@ object SessionManager {
             .putString(KEY_USER_ADDRESS, address)
             .apply()
     }
+
+    // ==================== MÉTODOS PARA UBICACIÓN DE ENTREGA ====================
+
+    fun saveDeliveryLocation(lat: Double, lng: Double, address: String) {
+        prefs.edit()
+            .putFloat(KEY_DELIVERY_LAT, lat.toFloat())
+            .putFloat(KEY_DELIVERY_LNG, lng.toFloat())
+            .putString(KEY_DELIVERY_ADDRESS, address)
+            .apply()
+    }
+
+    fun getDeliveryLatitude(): Double {
+        return prefs.getFloat(KEY_DELIVERY_LAT, 0f).toDouble()
+    }
+
+    fun getDeliveryLongitude(): Double {
+        return prefs.getFloat(KEY_DELIVERY_LNG, 0f).toDouble()
+    }
+
+    fun getDeliveryAddress(): String {
+        return prefs.getString(KEY_DELIVERY_ADDRESS, "") ?: ""
+    }
+
+    fun clearDeliveryLocation() {
+        prefs.edit()
+            .remove(KEY_DELIVERY_LAT)
+            .remove(KEY_DELIVERY_LNG)
+            .remove(KEY_DELIVERY_ADDRESS)
+            .apply()
+    }
+
+    // ==================== MÉTODOS EXISTENTES ====================
 
     fun getToken(): String = "Bearer ${prefs.getString(KEY_TOKEN, "") ?: ""}"
     fun getUserId(): String = prefs.getString(KEY_USER_ID, "") ?: ""

@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".AgroApplication"
@@ -21,7 +24,7 @@
         <!-- API Key de Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" />
+            android:value="AIzaSyCQ87ZimfFtzExy8xWUsx0zmasOjC4BgUQ" />
 
         <activity
             android:name=".ui.LoginActivity"
@@ -40,7 +43,15 @@
         <activity android:name=".ui.OrdersActivity" android:exported="false"/>
         <activity android:name=".ui.ProfileActivity" android:exported="false"/>
         <activity android:name=".ui.DriverActivity" android:exported="false"/>
-        <activity android:name=".ui.MapsActivity" android:exported="false" />
+        <activity android:name=".ui.MapsActivity" android:exported="false"/>
+        <activity android:name=".ui.OrderTrackingActivity" android:exported="false"/>
+        <activity android:name=".ui.AdminActivity" android:exported="false" />
+
+        <!-- Servicio de ubicación para driver -->
+        <service
+            android:name=".service.DriverLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- FileProvider para fotos de entrega -->
         <provider

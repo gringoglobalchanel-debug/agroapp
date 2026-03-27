@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -26,7 +27,9 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
+import com.agroapp.model.DynamicPackageOrder
 import com.agroapp.network.SessionManager
+import com.agroapp.service.DriverLocationService
 import com.agroapp.viewmodel.DriverViewModel
 import com.agroapp.viewmodel.TakePackageState
 import java.io.File
@@ -41,7 +44,6 @@ class DriverActivity : AppCompatActivity() {
     private lateinit var availablePackagesAdapter: AvailablePackagesAdapter
     private lateinit var myPackagesAdapter: MyPackagesAdapter
 
-    // Variables para manejar la foto del comprobante
     var pendingPhotoOrderId: String? = null
     var pendingPhotoPosition: Int = -1
     var pendingPhotoAdapter: PackageOrderAdapter? = null
@@ -50,7 +52,6 @@ class DriverActivity : AppCompatActivity() {
 
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
-    // Lanzador para el resultado de la cámara
     private val takePhotoLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -79,7 +80,6 @@ class DriverActivity : AppCompatActivity() {
         }
     }
 
-    // Lanzador para solicitar permiso de cámara
     private val requestCameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -137,13 +137,21 @@ class DriverActivity : AppCompatActivity() {
             }
         )
 
-        myPackagesAdapter = MyPackagesAdapter { orderId, position, adapter ->
-            pendingPhotoOrderId = orderId
-            pendingPhotoPosition = position
-            pendingPhotoAdapter = null
-            pendingPhotoAdapterForMyPackages = adapter
-            checkCameraPermissionAndOpen()
-        }
+        myPackagesAdapter = MyPackagesAdapter(
+            onConfirmClick = { orderId, position, adapter ->
+                pendingPhotoOrderId = orderId
+                pendingPhotoPosition = position
+                pendingPhotoAdapter = null
+                pendingPhotoAdapterForMyPackages = adapter
+                checkCameraPermissionAndOpen()
+            },
+            onStartTripClick = { order ->
+                startTrip(order)
+            },
+            onWhatsAppClick = { order ->
+                openWhatsApp(order)
+            }
+        )
 
         findViewById<RecyclerView>(R.id.rvAvailableBlocks).apply {
             layoutManager = LinearLayoutManager(this@DriverActivity)
@@ -153,6 +161,53 @@ class DriverActivity : AppCompatActivity() {
         findViewById<RecyclerView>(R.id.rvMyBlocks).apply {
             layoutManager = LinearLayoutManager(this@DriverActivity)
             adapter = myPackagesAdapter
+        }
+    }
+
+    private fun startTrip(order: DynamicPackageOrder) {
+        // 1. Compartir ubicación con el cliente
+        startLocationTracking(order)
+
+        // 2. Abrir Google Maps a la dirección del cliente
+        openNavigation(order)
+    }
+
+    private fun startLocationTracking(order: DynamicPackageOrder) {
+        val intent = Intent(this, DriverLocationService::class.java).apply {
+            action = DriverLocationService.ACTION_START
+            putExtra(DriverLocationService.EXTRA_ORDER_ID, order.order_id)
+        }
+        ContextCompat.startForegroundService(this, intent)
+        Toast.makeText(this, "📍 Compartiendo ubicación con el cliente", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun openNavigation(order: DynamicPackageOrder) {
+        val lat = order.delivery_latitude
+        val lng = order.delivery_longitude
+
+        if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
+            try {
+                val uri = Uri.parse("google.navigation:q=$lat,$lng")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "No se pudo abrir el mapa", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this, "No hay ubicación disponible para este pedido", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openWhatsApp(order: DynamicPackageOrder) {
+        val phone = order.customer_phone.replace("+", "").replace(" ", "").trim()
+        val message = "Hola ${order.customer_name}, soy tu repartidor de AgroApp. Estoy en camino con tu pedido."
+        val url = "https://wa.me/$phone?text=${Uri.encode(message)}"
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -347,7 +402,6 @@ class DriverActivity : AppCompatActivity() {
                 clearPendingPhoto()
                 viewModel.loadMyPackages()
 
-                // Delay para asegurar que la base de datos se actualice antes de recargar ganancias
                 Handler(Looper.getMainLooper()).postDelayed({
                     viewModel.loadPackageEarnings()
                 }, 500)

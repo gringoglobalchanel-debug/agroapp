@@ -12,6 +12,7 @@ import com.agroapp.model.DriverPackageEarnings
 import com.agroapp.model.TakeBlockRequest
 import com.agroapp.model.TakePackageRequest
 import com.agroapp.model.UpdateStatusRequest
+import com.agroapp.network.DriverLocationRequest
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import kotlinx.coroutines.launch
@@ -55,8 +56,6 @@ class DriverViewModel : ViewModel() {
         loadMyPackages()
         loadPackageEarnings()
     }
-
-    // ==================== BLOQUES (VIEJO) ====================
 
     fun loadAvailableBlocks() {
         viewModelScope.launch {
@@ -108,8 +107,6 @@ class DriverViewModel : ViewModel() {
     }
 
     fun resetTakeBlockState() { _takeBlockState.value = null }
-
-    // ==================== PAQUETES (NUEVO) ====================
 
     fun loadAvailablePackages() {
         viewModelScope.launch {
@@ -167,7 +164,6 @@ class DriverViewModel : ViewModel() {
 
     fun resetTakePackageState() { _takePackageState.value = null }
 
-    // ACTUALIZAR ESTADO DE UN PEDIDO
     fun updateOrderStatus(orderId: String, newStatus: String) {
         viewModelScope.launch {
             try {
@@ -179,12 +175,28 @@ class DriverViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     android.util.Log.d("DriverViewModel", "✅ Pedido $orderId actualizado a $newStatus")
                     loadMyPackages()
-                    // NO llamar a loadPackageEarnings() aquí - se hará desde DriverActivity con delay
                 } else {
-                    android.util.Log.e("DriverViewModel", "❌ Error al actualizar pedido: ${response.code()} - ${response.errorBody()?.string()}")
+                    android.util.Log.e("DriverViewModel", "❌ Error al actualizar pedido")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("DriverViewModel", "❌ Error de conexión: ${e.message}")
+            }
+        }
+    }
+
+    fun updateDriverLocation(orderId: String, latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            try {
+                val token = SessionManager.getToken()
+                val response = api.updateDriverLocation(
+                    token,
+                    DriverLocationRequest(orderId, latitude, longitude)
+                )
+                if (response.isSuccessful) {
+                    android.util.Log.d("DriverViewModel", "📍 Ubicación actualizada")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DriverViewModel", "❌ Error actualizando ubicación: ${e.message}")
             }
         }
     }

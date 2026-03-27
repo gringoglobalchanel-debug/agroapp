@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvDriverName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Conductor"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#1B5E20" />
+
+            <TextView
+                android:id="@+id/tvPaymentStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PENDIENTE"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:background="#FF9800"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:radius="12dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvWeekRange"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Semana"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tvTotalOrders"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pedidos: 0"
+                android:textSize="12sp"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/tvTotalTips"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Propinas: "
+                android:textSize="12sp"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/tvNetAmount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Neto: "
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnProcessPayment"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="8dp"
+            android:text="Marcar como Pagado"
+            android:textSize="12sp"
+            android:backgroundTint="#4CAF50"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

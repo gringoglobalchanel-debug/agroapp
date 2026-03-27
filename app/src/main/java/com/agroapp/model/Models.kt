@@ -71,7 +71,10 @@ data class Order(
     @SerializedName("delivery_date") val deliveryDate: String,
     val notes: String?,
     @SerializedName("created_at") val createdAt: String,
-    @SerializedName("order_items") val items: List<OrderItem>?
+    @SerializedName("order_items") val items: List<OrderItem>?,
+    @SerializedName("driver_id") val driverId: String? = null,
+    @SerializedName("customer_name") val customerName: String? = null,
+    @SerializedName("customer_phone") val customerPhone: String? = null
 ) {
     val displayTotal: Double get() = if (totalAmount > 0) totalAmount else items?.sumOf { it.subtotal } ?: 0.0
 }

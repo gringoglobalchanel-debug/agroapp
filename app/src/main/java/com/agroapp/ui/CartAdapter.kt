@@ -56,7 +56,6 @@ class CartAdapter(
             val subtotal = product.price * quantity
             tvSubtotal.text = formatter.format(subtotal)
 
-            // Cargar imagen del producto - CORREGIDO: usar imageUrl, no image_url
             val imageUrl = product.imageUrl
             if (!imageUrl.isNullOrEmpty()) {
                 Glide.with(itemView.context)

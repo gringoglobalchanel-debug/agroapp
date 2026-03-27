@@ -1,5 +1,7 @@
 package com.agroapp.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -57,10 +59,8 @@ class AvailablePackagesAdapter(
             tvPayment.text = "${formatter.format(driverPayment)} (${packageItem.current_size} × ${formatter.format(pricePerOrder * 0.90)})"
             tvCreatedAt.text = "Creado: ${formatDate(packageItem.created_at)}"
 
-            // Para bloques disponibles (status = 'available'), mostrar solo info básica
             val isAvailable = packageItem.status == "available"
 
-            // Usar una variable mutable para el adaptador
             lateinit var ordersAdapter: PackageOrderAdapter
 
             ordersAdapter = PackageOrderAdapter(
@@ -136,6 +136,7 @@ class PackageOrderAdapter(
         private val btnMarkPending: Button = itemView.findViewById(R.id.btnMarkPending)
         private val btnMarkDelivered: Button = itemView.findViewById(R.id.btnMarkDelivered)
         private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
+        private val btnWhatsApp: Button = itemView.findViewById(R.id.btnWhatsApp)
 
         fun bind(order: DynamicPackageOrder, position: Int) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
@@ -144,7 +145,6 @@ class PackageOrderAdapter(
             tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
             tvTotalAmount.text = "💰 Total: ${formatter.format(order.total_amount)}"
 
-            // Mostrar propina si existe
             if (order.tip_amount > 0) {
                 tvTipAmount.visibility = View.VISIBLE
                 tvTipAmount.text = "💸 Propina: ${formatter.format(order.tip_amount)}"
@@ -152,18 +152,29 @@ class PackageOrderAdapter(
                 tvTipAmount.visibility = View.GONE
             }
 
-            // Si es "Bloques disponibles", ocultar estado y botones
+            // Botón WhatsApp
+            if (order.customer_phone.isNotEmpty() && order.customer_phone != "No disponible") {
+                btnWhatsApp.visibility = View.VISIBLE
+                btnWhatsApp.setOnClickListener {
+                    val phone = order.customer_phone.replace(Regex("[^0-9]"), "")
+                    val url = "https://wa.me/$phone?text=Hola%20${order.customer_name}%2C%20soy%20tu%20repartidor%20de%20AgroApp.%20Estoy%20en%20camino%20con%20tu%20pedido."
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    itemView.context.startActivity(intent)
+                }
+            } else {
+                btnWhatsApp.visibility = View.GONE
+            }
+
             if (isAvailable) {
                 tvOrderStatus.visibility = View.GONE
                 btnMarkPending.visibility = View.GONE
                 btnMarkDelivered.visibility = View.GONE
                 btnTakePhoto.visibility = View.GONE
+                btnWhatsApp.visibility = View.GONE
             } else {
-                // En "Mis bloques", mostrar todo normalmente
                 tvOrderStatus.visibility = View.VISIBLE
                 updateStatusUI("pending")
 
-                // Configurar botones de estado
                 btnMarkPending.visibility = View.VISIBLE
                 btnMarkDelivered.visibility = View.VISIBLE
                 btnTakePhoto.visibility = View.VISIBLE

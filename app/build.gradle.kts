@@ -13,6 +13,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // Agregar API key de Google Maps
+        manifestPlaceholders["google_maps_key"] = "AIzaSyCQ87ZimfFtzExy8xWUsx0zmasOjC4BgUQ"
     }
 
     buildTypes {
@@ -75,6 +78,10 @@ dependencies {
 
     // Payments
     implementation("com.stripe:stripe-android:20.42.0")
+
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // Java 8+ support
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")

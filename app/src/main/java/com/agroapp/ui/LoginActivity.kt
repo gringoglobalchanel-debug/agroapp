@@ -2,100 +2,121 @@ package com.agroapp.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.viewModels
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.agroapp.R
-import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.AuthState
 import com.agroapp.viewmodel.AuthViewModel
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputEditText
 
 class LoginActivity : AppCompatActivity() {
 
-    private val viewModel: AuthViewModel by viewModels()
+    private lateinit var etEmail: EditText
+    private lateinit var etPassword: EditText
+    private lateinit var btnLogin: Button
+    private lateinit var tvRegister: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var tvError: TextView
+
+    private lateinit var viewModel: AuthViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        // Verificar si ya hay sesión iniciada
-        if (SessionManager.isLoggedIn()) {
-            goToMain()
-            return
-        }
+        initViews()
+        setupViewModel()
+    }
 
-        // Inicializar vistas
-        val etEmail = findViewById<TextInputEditText>(R.id.etEmail)
-        val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
-        val btnLogin = findViewById<MaterialButton>(R.id.btnLogin)
-        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
-        val tvRegister = findViewById<TextView>(R.id.tvRegister)
+    private fun initViews() {
+        etEmail = findViewById(R.id.etEmail)
+        etPassword = findViewById(R.id.etPassword)
+        btnLogin = findViewById(R.id.btnLogin)
+        tvRegister = findViewById(R.id.tvRegister)
+        progressBar = findViewById(R.id.progressBar)
+        tvError = findViewById(R.id.tvError)
 
-        // Configurar botón de login
         btnLogin.setOnClickListener {
-            val email = etEmail.text?.toString()?.trim() ?: ""
-            val password = etPassword.text?.toString()?.trim() ?: ""
-
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            viewModel.login(email, password)
+            performLogin()
         }
 
-        // Ir a registro
         tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+    }
 
-        // Observar estado de autenticación
-        viewModel.authState.observe(this) { state ->
+    private fun setupViewModel() {
+        viewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+
+        viewModel.authState.observe(this, Observer { state ->
             when (state) {
                 is AuthState.Loading -> {
                     progressBar.visibility = View.VISIBLE
                     btnLogin.isEnabled = false
+                    tvError.visibility = View.GONE
                 }
                 is AuthState.Success -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
-                    Toast.makeText(this, "¡Bienvenido ${state.name}!", Toast.LENGTH_SHORT).show()
-                    goToMain()
+
+                    when {
+                        state.role == "admin" -> {
+                            Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, AdminActivity::class.java))
+                        }
+                        state.role == "vendedor" -> {
+                            Toast.makeText(this, "Bienvenido Vendedor", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, VendorActivity::class.java))
+                        }
+                        state.role == "driver" -> {
+                            Toast.makeText(this, "Bienvenido Repartidor", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, DriverActivity::class.java))
+                        }
+                        else -> {
+                            Toast.makeText(this, "Bienvenido ${state.name}", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, HomeActivity::class.java))
+                        }
+                    }
+                    finish()
                 }
                 is AuthState.Error -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
-                    Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
+                    tvError.text = state.message
+                    tvError.visibility = View.VISIBLE
                 }
                 else -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
                 }
             }
-        }
+        })
     }
 
-    private fun goToMain() {
-        val role = SessionManager.getRole()
-        val userType = SessionManager.getUserType()
+    private fun performLogin() {
+        val email = etEmail.text.toString().trim()
+        val password = etPassword.text.toString().trim()
 
-        val intent = when {
-            userType == "driver" -> {
-                Intent(this, DriverActivity::class.java)
-            }
-            role == "vendedor" -> {
-                Intent(this, VendorActivity::class.java)
-            }
-            else -> {
-                Intent(this, HomeActivity::class.java)
-            }
+        if (TextUtils.isEmpty(email)) {
+            etEmail.error = "Ingresa tu email"
+            etEmail.requestFocus()
+            return
         }
-        startActivity(intent)
-        finish()
+
+        if (TextUtils.isEmpty(password)) {
+            etPassword.error = "Ingresa tu contraseña"
+            etPassword.requestFocus()
+            return
+        }
+
+        viewModel.login(email, password)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.resetState()
     }
 }

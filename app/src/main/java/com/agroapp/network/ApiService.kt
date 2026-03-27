@@ -156,4 +156,104 @@ interface ApiService {
         @Path("id") orderId: String,
         @Body body: UpdateStatusRequest
     ): Response<Order>
+
+    // ==================== DRIVER - UBICACIÓN EN TIEMPO REAL ====================
+
+    @POST("driver/location")
+    suspend fun updateDriverLocation(
+        @Header("Authorization") token: String,
+        @Body body: DriverLocationRequest
+    ): Response<MessageResponse>
+
+    @GET("driver/location/{orderId}")
+    suspend fun getDriverLocation(
+        @Header("Authorization") token: String,
+        @Path("orderId") orderId: String
+    ): Response<DriverLocationResponse>
+
+    // ==================== ADMIN ====================
+
+    @GET("admin/dashboard/stats")
+    suspend fun getAdminDashboardStats(
+        @Header("Authorization") token: String
+    ): Response<AdminDashboardStats>
+
+    @GET("admin/products")
+    suspend fun getAllProducts(
+        @Header("Authorization") token: String,
+        @Query("category") categoryId: Int? = null,
+        @Query("search") search: String? = null,
+        @Query("low_stock") lowStock: Boolean? = null
+    ): Response<List<ProductWithInventory>>
+
+    @POST("admin/products")
+    suspend fun createProduct(
+        @Header("Authorization") token: String,
+        @Body body: CreateProductRequest
+    ): Response<Product>
+
+    @PATCH("admin/products/{id}")
+    suspend fun updateProduct(
+        @Header("Authorization") token: String,
+        @Path("id") productId: Int,
+        @Body body: UpdateProductRequest
+    ): Response<Product>
+
+    @PATCH("admin/products/{id}/stock")
+    suspend fun updateProductStock(
+        @Header("Authorization") token: String,
+        @Path("id") productId: Int,
+        @Body body: UpdateStockRequest
+    ): Response<MessageResponse>
+
+    @DELETE("admin/products/{id}")
+    suspend fun deleteProduct(
+        @Header("Authorization") token: String,
+        @Path("id") productId: Int
+    ): Response<MessageResponse>
+
+    @GET("admin/drivers/payments")
+    suspend fun getDriverPayments(
+        @Header("Authorization") token: String,
+        @Query("status") status: String? = null,
+        @Query("driver_id") driverId: String? = null,
+        @Query("week_start") weekStart: String? = null
+    ): Response<List<DriverPayment>>
+
+    @POST("admin/drivers/payments/process")
+    suspend fun processDriverPayment(
+        @Header("Authorization") token: String,
+        @Body body: ProcessPaymentRequest
+    ): Response<MessageResponse>
+
+    @GET("admin/inventory/logs")
+    suspend fun getInventoryLogs(
+        @Header("Authorization") token: String,
+        @Query("product_id") productId: Int? = null,
+        @Query("limit") limit: Int = 100
+    ): Response<List<InventoryLog>>
+
+    @GET("admin/categories")
+    suspend fun getCategories(
+        @Header("Authorization") token: String
+    ): Response<List<Category>>
+
+    @GET("admin/drivers/list")
+    suspend fun getDriversList(
+        @Header("Authorization") token: String
+    ): Response<List<User>>
 }
+
+// ==================== MODELOS PARA UBICACIÓN ====================
+
+data class DriverLocationRequest(
+    val orderId: String,
+    val latitude: Double,
+    val longitude: Double
+)
+
+data class DriverLocationResponse(
+    val latitude: Double?,
+    val longitude: Double?,
+    val updated_at: String?
+)
