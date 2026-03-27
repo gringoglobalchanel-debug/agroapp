@@ -35,7 +35,7 @@ class AuthViewModel : ViewModel() {
                             data.address,
                             data.userType
                         )
-                        _authState.postValue(AuthState.Success(data.name, data.role))
+                        _authState.postValue(AuthState.Success(data.name, data.role, data.userType))
                     } else {
                         _authState.postValue(AuthState.Error("Respuesta vacía del servidor"))
                     }
@@ -73,7 +73,7 @@ sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     object Registered : AuthState()
-    data class Success(val name: String, val role: String) : AuthState()
+    data class Success(val name: String, val role: String, val userType: String) : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
@@ -241,7 +241,7 @@ class OrderViewModel : ViewModel() {
                 val items = cartItems.map { (product, qty) -> CartItem(product.id, qty) }
                 val response = api.createPendingYappiOrder(
                     SessionManager.getToken(),
-                    com.agroapp.model.CreatePendingOrderRequest(items, deliveryAddress)
+                    CreatePendingOrderRequest(items, deliveryAddress)
                 )
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -269,7 +269,7 @@ class OrderViewModel : ViewModel() {
                 val response = api.confirmYappiPayment(
                     SessionManager.getToken(),
                     orderId,
-                    com.agroapp.model.ConfirmPaymentRequest(referenceCode)
+                    ConfirmPaymentRequest(referenceCode)
                 )
                 if (response.isSuccessful) {
                     val message = response.body()?.message ?: "Pedido confirmado"
@@ -283,8 +283,6 @@ class OrderViewModel : ViewModel() {
             }
         }
     }
-
-    // ==================== MÉTODO PARA ACTUALIZAR ESTADO DESDE EL DRIVER ====================
 
     fun updateOrderStatus(orderId: String, newStatus: String, callback: (Boolean) -> Unit = {}) {
         viewModelScope.launch {

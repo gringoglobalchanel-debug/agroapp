@@ -7,6 +7,11 @@
         android:icon="@android:drawable/ic_menu_rotate"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_calculate_payments"
+        android:title="Calcular Pagos"
+        android:icon="@android:drawable/ic_menu_agenda"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_logout"
         android:title="Cerrar sesión"
         android:icon="@android:drawable/ic_menu_close_clear_cancel"

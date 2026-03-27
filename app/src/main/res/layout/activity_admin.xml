@@ -18,9 +18,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
+        android:contentDescription="Pestañas de navegación"
         app:tabMode="scrollable"
         app:tabSelectedTextColor="#2E7D32"
         app:tabTextColor="#757575" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
 
     <ScrollView
         android:id="@+id/scrollStats"
@@ -45,7 +54,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

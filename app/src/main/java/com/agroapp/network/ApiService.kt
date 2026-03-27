@@ -226,6 +226,13 @@ interface ApiService {
         @Body body: ProcessPaymentRequest
     ): Response<MessageResponse>
 
+    @POST("admin/drivers/payments/calculate")
+    suspend fun calculateDriverPayment(
+        @Header("Authorization") token: String,
+        @Query("driver_id") driverId: String,
+        @Query("week_start") weekStart: String
+    ): Response<MessageResponse>
+
     @GET("admin/inventory/logs")
     suspend fun getInventoryLogs(
         @Header("Authorization") token: String,

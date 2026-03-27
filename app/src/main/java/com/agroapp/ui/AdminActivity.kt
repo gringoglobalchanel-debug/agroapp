@@ -3,6 +3,7 @@ package com.agroapp.ui
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -14,14 +15,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
-import com.agroapp.model.CreateProductRequest
-import com.agroapp.model.UpdateProductRequest
+import com.agroapp.model.*
 import com.agroapp.network.SessionManager
 import com.agroapp.ui.adapters.PaymentsAdminAdapter
 import com.agroapp.ui.adapters.ProductsAdminAdapter
 import com.agroapp.viewmodel.AdminViewModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AdminActivity : AppCompatActivity() {
 
@@ -32,34 +35,48 @@ class AdminActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
     private lateinit var tvStats: TextView
     private lateinit var scrollStats: ScrollView
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var productsAdapter: ProductsAdminAdapter
     private lateinit var paymentsAdapter: PaymentsAdminAdapter
+
+    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
+        initViews()
+        setupViewModel()
+        setupAdapters()
+        setupTabs()
+        setupObservers()
+        setupFab()
+
+        viewModel.loadDashboardStats()
+        viewModel.loadCategories()
+        viewModel.loadDrivers()
+    }
+
+    private fun initViews() {
         toolbar = findViewById(R.id.toolbar)
         tabLayout = findViewById(R.id.tabLayout)
         recyclerView = findViewById(R.id.recyclerView)
         fab = findViewById(R.id.fab)
         tvStats = findViewById(R.id.tvStats)
         scrollStats = findViewById(R.id.scrollStats)
+        progressBar = findViewById(R.id.progressBar)
 
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Panel Administrador"
 
+        recyclerView.layoutManager = LinearLayoutManager(this)
+    }
+
+    private fun setupViewModel() {
         viewModel = ViewModelProvider(this)[AdminViewModel::class.java]
-
-        setupAdapters()
-        setupObservers()
-        setupTabs()
-        setupFab()
-
-        viewModel.loadDashboardStats()
-        viewModel.loadCategories()
     }
 
     private fun setupAdapters() {
@@ -72,51 +89,6 @@ class AdminActivity : AppCompatActivity() {
         paymentsAdapter = PaymentsAdminAdapter { payment ->
             showProcessPaymentDialog(payment)
         }
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-    }
-
-    private fun setupObservers() {
-        viewModel.loading.observe(this, Observer { isLoading ->
-            // Puedes agregar un ProgressBar
-        })
-
-        viewModel.message.observe(this, Observer { message ->
-            message?.let {
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                viewModel.clearMessage()
-            }
-        })
-
-        viewModel.dashboardStats.observe(this, Observer { stats ->
-            if (stats != null) {
-                tvStats.text = """
-                    📊 DASHBOARD
-                    
-                    📦 Productos totales: ${stats.totalProducts}
-                    ⚠️ Stock bajo: ${stats.lowStockProducts}
-                    🚫 Agotados: ${stats.outOfStockProducts}
-                    
-                    📅 Pedidos hoy: ${stats.totalOrdersToday}
-                    💰 Ventas hoy: $${"%.2f".format(stats.totalRevenueToday)}
-                    
-                    📆 Pedidos semana: ${stats.totalOrdersWeek}
-                    💵 Ventas semana: $${"%.2f".format(stats.totalRevenueWeek)}
-                    
-                    👥 Repartidores: ${stats.totalDrivers}
-                    🚚 Activos: ${stats.activeDrivers}
-                    💸 Pagos pendientes: $${"%.2f".format(stats.pendingPayments)}
-                """.trimIndent()
-            }
-        })
-
-        viewModel.products.observe(this, Observer { products ->
-            productsAdapter.submitList(products ?: emptyList())
-        })
-
-        viewModel.driverPayments.observe(this, Observer { payments ->
-            paymentsAdapter.submitList(payments ?: emptyList())
-        })
     }
 
     private fun setupTabs() {
@@ -147,7 +119,7 @@ class AdminActivity : AppCompatActivity() {
                         recyclerView.visibility = View.VISIBLE
                         fab.visibility = View.GONE
                         recyclerView.adapter = productsAdapter
-                        viewModel.loadProducts()
+                        viewModel.loadProducts(lowStock = true)
                     }
                     3 -> {
                         scrollStats.visibility = View.GONE
@@ -160,12 +132,56 @@ class AdminActivity : AppCompatActivity() {
                         scrollStats.visibility = View.GONE
                         recyclerView.visibility = View.VISIBLE
                         fab.visibility = View.GONE
-                        Toast.makeText(this@AdminActivity, "Logs - Próximamente", Toast.LENGTH_SHORT).show()
+                        viewModel.loadInventoryLogs()
                     }
                 }
             }
+
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+    }
+
+    private fun setupObservers() {
+        viewModel.loading.observe(this, Observer { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        })
+
+        viewModel.message.observe(this, Observer { message ->
+            message?.let {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearMessage()
+            }
+        })
+
+        viewModel.dashboardStats.observe(this, Observer { stats ->
+            if (stats != null) {
+                tvStats.text = buildString {
+                    appendLine("📊 DASHBOARD")
+                    appendLine()
+                    appendLine("📦 Productos totales: ${stats.totalProducts}")
+                    appendLine("⚠️ Stock bajo: ${stats.lowStockProducts}")
+                    appendLine("🚫 Agotados: ${stats.outOfStockProducts}")
+                    appendLine()
+                    appendLine("📅 Pedidos hoy: ${stats.totalOrdersToday}")
+                    appendLine("💰 Ventas hoy: ${formatter.format(stats.totalRevenueToday)}")
+                    appendLine()
+                    appendLine("📆 Pedidos semana: ${stats.totalOrdersWeek}")
+                    appendLine("💵 Ventas semana: ${formatter.format(stats.totalRevenueWeek)}")
+                    appendLine()
+                    appendLine("👥 Repartidores: ${stats.totalDrivers}")
+                    appendLine("🚚 Activos: ${stats.activeDrivers}")
+                    appendLine("💸 Pagos pendientes: ${formatter.format(stats.pendingPayments)}")
+                }
+            }
+        })
+
+        viewModel.products.observe(this, Observer { products ->
+            productsAdapter.submitList(products ?: emptyList())
+        })
+
+        viewModel.driverPayments.observe(this, Observer { payments ->
+            paymentsAdapter.submitList(payments ?: emptyList())
         })
     }
 
@@ -178,9 +194,11 @@ class AdminActivity : AppCompatActivity() {
     private fun showCreateProductDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_product, null)
         val etName = dialogView.findViewById<EditText>(R.id.etProductName)
+        val etDescription = dialogView.findViewById<EditText>(R.id.etProductDescription)
         val etPrice = dialogView.findViewById<EditText>(R.id.etProductPrice)
         val etUnit = dialogView.findViewById<EditText>(R.id.etProductUnit)
         val etStock = dialogView.findViewById<EditText>(R.id.etProductStock)
+        val etMinStock = dialogView.findViewById<EditText>(R.id.etMinStock)
         val spinnerCategory = dialogView.findViewById<Spinner>(R.id.spinnerCategory)
 
         viewModel.categories.observe(this, Observer { categories ->
@@ -195,14 +213,25 @@ class AdminActivity : AppCompatActivity() {
             .setView(dialogView)
             .setPositiveButton("Crear") { _, _ ->
                 val name = etName.text.toString()
+                val description = etDescription.text.toString()
                 val price = etPrice.text.toString().toDoubleOrNull() ?: 0.0
                 val unit = etUnit.text.toString()
                 val stock = etStock.text.toString().toDoubleOrNull() ?: 0.0
+                val minStock = etMinStock.text.toString().toDoubleOrNull() ?: 0.0
                 val categoryIndex = spinnerCategory.selectedItemPosition
                 val categoryId = viewModel.categories.value?.getOrNull(categoryIndex)?.id ?: 1
 
                 if (name.isNotEmpty() && price > 0) {
-                    val request = CreateProductRequest(name, null, price, unit, categoryId, stock, 0.0, null)
+                    val request = CreateProductRequest(
+                        name = name,
+                        description = description,
+                        price = price,
+                        unit = unit,
+                        categoryId = categoryId,
+                        stock = stock,
+                        minStock = minStock,
+                        imageUrl = null
+                    )
                     viewModel.createProduct(request)
                 } else {
                     Toast.makeText(this, "Completa los campos requeridos", Toast.LENGTH_SHORT).show()
@@ -212,18 +241,22 @@ class AdminActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEditProductDialog(product: com.agroapp.model.ProductWithInventory) {
+    private fun showEditProductDialog(product: ProductWithInventory) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_product, null)
         val etName = dialogView.findViewById<EditText>(R.id.etProductName)
+        val etDescription = dialogView.findViewById<EditText>(R.id.etProductDescription)
         val etPrice = dialogView.findViewById<EditText>(R.id.etProductPrice)
         val etUnit = dialogView.findViewById<EditText>(R.id.etProductUnit)
         val etStock = dialogView.findViewById<EditText>(R.id.etProductStock)
+        val etMinStock = dialogView.findViewById<EditText>(R.id.etMinStock)
         val spinnerCategory = dialogView.findViewById<Spinner>(R.id.spinnerCategory)
 
         etName.setText(product.name)
+        etDescription.setText(product.description ?: "")
         etPrice.setText(product.price.toString())
         etUnit.setText(product.unit)
         etStock.setText((product.stock ?: 0.0).toString())
+        etMinStock.setText((product.minStock ?: 0.0).toString())
 
         viewModel.categories.observe(this, Observer { categories ->
             val categoryNames = categories?.map { it.name } ?: emptyList()
@@ -239,17 +272,21 @@ class AdminActivity : AppCompatActivity() {
             .setView(dialogView)
             .setPositiveButton("Guardar") { _, _ ->
                 val name = etName.text.toString()
+                val description = etDescription.text.toString()
                 val price = etPrice.text.toString().toDoubleOrNull()
                 val unit = etUnit.text.toString()
                 val stock = etStock.text.toString().toDoubleOrNull()
+                val minStock = etMinStock.text.toString().toDoubleOrNull()
                 val categoryIndex = spinnerCategory.selectedItemPosition
                 val categoryId = viewModel.categories.value?.getOrNull(categoryIndex)?.id
 
                 val request = UpdateProductRequest(
                     name = if (name != product.name) name else null,
+                    description = if (description != product.description) description else null,
                     price = if (price != null && price != product.price) price else null,
                     unit = if (unit != product.unit) unit else null,
                     stock = if (stock != null && stock != product.stock) stock else null,
+                    minStock = if (minStock != null && minStock != product.minStock) minStock else null,
                     categoryId = if (categoryId != null && categoryId != product.categoryId) categoryId else null
                 )
                 viewModel.updateProduct(product.id, request)
@@ -258,9 +295,10 @@ class AdminActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showUpdateStockDialog(product: com.agroapp.model.ProductWithInventory) {
+    private fun showUpdateStockDialog(product: ProductWithInventory) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_stock, null)
         val tvProductName = dialogView.findViewById<TextView>(R.id.tvStockProductName)
+        val tvCurrentStock = dialogView.findViewById<TextView>(R.id.tvCurrentStock)
         val etQuantity = dialogView.findViewById<EditText>(R.id.etStockQuantity)
         val radioAdd = dialogView.findViewById<RadioButton>(R.id.radioAdd)
         val radioSubtract = dialogView.findViewById<RadioButton>(R.id.radioSubtract)
@@ -268,6 +306,7 @@ class AdminActivity : AppCompatActivity() {
         val etNotes = dialogView.findViewById<EditText>(R.id.etStockNotes)
 
         tvProductName.text = product.name
+        tvCurrentStock.text = "Stock actual: ${product.stock ?: 0} ${product.unit}"
 
         AlertDialog.Builder(this)
             .setTitle("Actualizar Stock")
@@ -286,7 +325,7 @@ class AdminActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showDeleteConfirmDialog(product: com.agroapp.model.ProductWithInventory) {
+    private fun showDeleteConfirmDialog(product: ProductWithInventory) {
         AlertDialog.Builder(this)
             .setTitle("Eliminar Producto")
             .setMessage("¿Estás seguro de eliminar ${product.name}?")
@@ -297,16 +336,20 @@ class AdminActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showProcessPaymentDialog(payment: com.agroapp.model.DriverPayment) {
+    private fun showProcessPaymentDialog(payment: DriverPayment) {
         AlertDialog.Builder(this)
             .setTitle("Procesar Pago")
-            .setMessage("""
-                Conductor: ${payment.driverName}
-                Semana: ${payment.weekStart} - ${payment.weekEnd}
-                Total: $${"%.2f".format(payment.netAmount)}
-                
-                ¿Marcar como pagado?
-            """.trimIndent())
+            .setMessage(buildString {
+                appendLine("Conductor: ${payment.driverName}")
+                appendLine("Semana: ${payment.weekStart} - ${payment.weekEnd}")
+                appendLine("Pedidos: ${payment.totalOrders}")
+                appendLine("Pago base: ${formatter.format(payment.totalBasePayment)}")
+                appendLine("Propinas: ${formatter.format(payment.totalTips)}")
+                appendLine("Comisión: ${formatter.format(payment.platformCommission)}")
+                appendLine("Neto a pagar: ${formatter.format(payment.netAmount)}")
+                appendLine()
+                appendLine("¿Marcar como pagado?")
+            })
             .setPositiveButton("Marcar como Pagado") { _, _ ->
                 viewModel.processDriverPayment(payment.id, "paid")
             }
@@ -326,9 +369,13 @@ class AdminActivity : AppCompatActivity() {
                 when (tabLayout.selectedTabPosition) {
                     0 -> viewModel.loadDashboardStats()
                     1 -> viewModel.loadProducts()
-                    2 -> viewModel.loadProducts()
+                    2 -> viewModel.loadProducts(lowStock = true)
                     3 -> viewModel.loadDriverPayments()
+                    4 -> viewModel.loadInventoryLogs()
                 }
+            }
+            R.id.action_calculate_payments -> {
+                showCalculatePaymentsDialog()
             }
             R.id.action_logout -> {
                 SessionManager.logout()
@@ -337,5 +384,43 @@ class AdminActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun showCalculatePaymentsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_calculate_payment, null)
+        val spinnerDriver = dialogView.findViewById<Spinner>(R.id.spinnerDriver)
+        val etWeekStart = dialogView.findViewById<EditText>(R.id.etWeekStart)
+
+        viewModel.drivers.observe(this, Observer { drivers ->
+            val driverNames = drivers?.map { "${it.fullName} (${it.email})" } ?: emptyList()
+            val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, driverNames)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinnerDriver.adapter = adapter
+        })
+
+        etWeekStart.setText(getCurrentWeekStart())
+
+        AlertDialog.Builder(this)
+            .setTitle("Calcular Pago")
+            .setView(dialogView)
+            .setPositiveButton("Calcular") { _, _ ->
+                val driverIndex = spinnerDriver.selectedItemPosition
+                val driverId = viewModel.drivers.value?.getOrNull(driverIndex)?.id
+                val weekStart = etWeekStart.text.toString()
+
+                if (driverId != null && weekStart.isNotEmpty()) {
+                    viewModel.calculateDriverPayment(driverId, weekStart)
+                } else {
+                    Toast.makeText(this, "Selecciona un conductor y una fecha", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun getCurrentWeekStart(): String {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        return dateFormat.format(calendar.time)
     }
 }

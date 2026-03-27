@@ -12,34 +12,43 @@
         android:text="Producto"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginBottom="12dp" />
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvCurrentStock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Stock actual: 0"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="16dp" />
 
     <RadioGroup
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="16dp">
 
         <RadioButton
             android:id="@+id/radioAdd"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Agregar" />
+            android:text="➕ Agregar" />
 
         <RadioButton
             android:id="@+id/radioSubtract"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Restar" />
+            android:text="➖ Restar" />
 
         <RadioButton
             android:id="@+id/radioSet"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Establecer"
+            android:text="✏️ Establecer"
             android:checked="true" />
 
     </RadioGroup>
@@ -50,7 +59,7 @@
         android:layout_height="wrap_content"
         android:hint="Cantidad"
         android:inputType="numberDecimal"
-        android:layout_marginBottom="12dp" />
+        android:layout_marginBottom="16dp" />
 
     <EditText
         android:id="@+id/etStockNotes"
