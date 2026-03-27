@@ -119,7 +119,7 @@ class AdminActivity : AppCompatActivity() {
                         recyclerView.visibility = View.VISIBLE
                         fab.visibility = View.GONE
                         recyclerView.adapter = productsAdapter
-                        viewModel.loadProducts(lowStock = true)
+                        viewModel.loadProducts(lowStock = false)  // ← CORREGIDO: muestra todos los productos
                     }
                     3 -> {
                         scrollStats.visibility = View.GONE
@@ -369,7 +369,7 @@ class AdminActivity : AppCompatActivity() {
                 when (tabLayout.selectedTabPosition) {
                     0 -> viewModel.loadDashboardStats()
                     1 -> viewModel.loadProducts()
-                    2 -> viewModel.loadProducts(lowStock = true)
+                    2 -> viewModel.loadProducts(lowStock = false)  // ← CORREGIDO
                     3 -> viewModel.loadDriverPayments()
                     4 -> viewModel.loadInventoryLogs()
                 }
