@@ -107,6 +107,11 @@ class DriverActivity : AppCompatActivity() {
         setupButtons()
     }
 
+    override fun onBackPressed() {
+        // Lleva la app al fondo sin cerrarla
+        moveTaskToBack(true)
+    }
+
     private fun initViews() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -165,10 +170,7 @@ class DriverActivity : AppCompatActivity() {
     }
 
     private fun startTrip(order: DynamicPackageOrder) {
-        // 1. Compartir ubicación con el cliente
         startLocationTracking(order)
-
-        // 2. Abrir Google Maps a la dirección del cliente
         openNavigation(order)
     }
 
@@ -270,8 +272,9 @@ class DriverActivity : AppCompatActivity() {
 
         btnLogout.setOnClickListener {
             SessionManager.logout()
-            Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-            startActivity(Intent(this, LoginActivity::class.java))
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
             finish()
         }
     }

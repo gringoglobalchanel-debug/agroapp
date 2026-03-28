@@ -67,6 +67,11 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    override fun onBackPressed() {
+        // Lleva la app al fondo sin cerrarla
+        moveTaskToBack(true)
+    }
+
     private fun initViews() {
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
@@ -84,7 +89,7 @@ class HomeActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.instance.getActiveOrder(
-                    token = SessionManager.getToken() // getToken() ya incluye "Bearer ..."
+                    token = SessionManager.getToken()
                 )
                 if (response.isSuccessful && response.body() != null) {
                     val order = response.body()!!

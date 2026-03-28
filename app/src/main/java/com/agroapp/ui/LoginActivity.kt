@@ -31,6 +31,11 @@ class LoginActivity : AppCompatActivity() {
         setupViewModel()
     }
 
+    override fun onBackPressed() {
+        // En login, sí puede salir de la app
+        finishAffinity()
+    }
+
     private fun initViews() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
@@ -39,9 +44,7 @@ class LoginActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
-        btnLogin.setOnClickListener {
-            performLogin()
-        }
+        btnLogin.setOnClickListener { performLogin() }
 
         tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
@@ -71,7 +74,7 @@ class LoginActivity : AppCompatActivity() {
                             Toast.makeText(this, "Bienvenido Vendedor", Toast.LENGTH_SHORT).show()
                             startActivity(Intent(this, VendorActivity::class.java))
                         }
-                        state.role == "driver" -> {
+                        state.userType == "driver" -> {
                             Toast.makeText(this, "Bienvenido Repartidor", Toast.LENGTH_SHORT).show()
                             startActivity(Intent(this, DriverActivity::class.java))
                         }

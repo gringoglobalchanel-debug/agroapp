@@ -11,6 +11,9 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:tag="mapFragment"
+        tools:ignore="FragmentTagUsage"
+        xmlns:tools="http://schemas.android.com/tools"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/bottomCard"
         app:layout_constraintStart_toStartOf="parent"
@@ -19,12 +22,14 @@
     <!-- Botón volver flotante -->
     <ImageButton
         android:id="@+id/btnBack"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_margin="16dp"
-        android:background="@drawable/circle_white"
+        android:background="#E8F5E9"
         android:src="@drawable/ic_arrow_back"
+        android:tint="#2E7D32"
         android:elevation="8dp"
+        android:contentDescription="Volver"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
@@ -57,7 +62,9 @@
                     android:id="@+id/ivStatusIcon"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:src="@drawable/ic_delivery_bike"/>
+                    android:src="@drawable/ic_delivery"
+                    android:contentDescription="Estado del pedido"
+                    app:tint="#2E7D32"/>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -82,9 +89,9 @@
                         android:text="El repartidor está cerca"
                         android:textSize="13sp"
                         android:textColor="#666666"/>
+
                 </LinearLayout>
 
-                <!-- Chip de estado -->
                 <TextView
                     android:id="@+id/tvStatusChip"
                     android:layout_width="wrap_content"
@@ -92,11 +99,12 @@
                     android:text="En camino"
                     android:textSize="12sp"
                     android:textColor="#2E7D32"
-                    android:background="@drawable/chip_green_bg"
+                    android:background="#E8F5E9"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"/>
+
             </LinearLayout>
 
             <!-- Divider -->
@@ -134,6 +142,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A1A"/>
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -158,6 +167,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="#2E7D32"/>
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -182,9 +192,13 @@
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A1A"/>
+
                 </LinearLayout>
+
             </LinearLayout>
+
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

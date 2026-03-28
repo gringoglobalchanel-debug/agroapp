@@ -119,7 +119,7 @@ class AdminActivity : AppCompatActivity() {
                         recyclerView.visibility = View.VISIBLE
                         fab.visibility = View.GONE
                         recyclerView.adapter = productsAdapter
-                        viewModel.loadProducts(lowStock = false)  // ← CORREGIDO: muestra todos los productos
+                        viewModel.loadProducts(lowStock = false)
                     }
                     3 -> {
                         scrollStats.visibility = View.GONE
@@ -369,7 +369,7 @@ class AdminActivity : AppCompatActivity() {
                 when (tabLayout.selectedTabPosition) {
                     0 -> viewModel.loadDashboardStats()
                     1 -> viewModel.loadProducts()
-                    2 -> viewModel.loadProducts(lowStock = false)  // ← CORREGIDO
+                    2 -> viewModel.loadProducts(lowStock = false)
                     3 -> viewModel.loadDriverPayments()
                     4 -> viewModel.loadInventoryLogs()
                 }
@@ -379,11 +379,18 @@ class AdminActivity : AppCompatActivity() {
             }
             R.id.action_logout -> {
                 SessionManager.logout()
-                startActivity(Intent(this, LoginActivity::class.java))
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
                 finish()
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onBackPressed() {
+        // Lleva la app al fondo sin cerrarla
+        moveTaskToBack(true)
     }
 
     private fun showCalculatePaymentsDialog() {
