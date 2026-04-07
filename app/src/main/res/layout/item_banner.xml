@@ -1,45 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5"
-    android:padding="0dp"
-    tools:ignore="MissingClass,LayoutDimension">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
 
-    <ImageView
-        android:id="@+id/ivBanner"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="280dp"
-        android:scaleType="centerCrop"
-        android:adjustViewBounds="true" />
+        android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="8dp"
-        android:background="#F5F5F5">
+        <!-- Imagen del banner -->
+        <ImageView
+            android:id="@+id/ivBanner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="Banner" />
 
-        <TextView
-            android:id="@+id/tvBannerTitle"
-            android:layout_width="wrap_content"
+        <!-- Gradiente oscuro sobre la imagen -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/banner_gradient" />
+
+        <!-- Textos sobre el gradiente -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#2E7D32"
-            android:layout_marginBottom="4dp" />
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:id="@+id/tvBannerDescription"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#FF5722"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvBannerTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="4"
+                android:layout_marginBottom="4dp" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvBannerDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#E8F5E9"
+                android:textSize="14sp"
+                android:shadowColor="#80000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="3" />
 
-</LinearLayout>
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.cardview.widget.CardView>

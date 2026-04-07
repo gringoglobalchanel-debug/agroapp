@@ -13,22 +13,48 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- Fila: Cliente y Estado -->
+        <!-- Fila: Foto + Cliente y Estado -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvCustomerName"
+            <!-- ✅ NUEVO: Avatar del cliente -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCustomerAvatar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_default_avatar"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/CircleImageView"/>
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="👤 Cliente"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#1B5E20" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvCustomerName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👤 Cliente"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1B5E20" />
+
+                <TextView
+                    android:id="@+id/tvCustomerPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📞 No disponible"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvOrderStatus"
@@ -44,16 +70,6 @@
 
         </LinearLayout>
 
-        <!-- Teléfono -->
-        <TextView
-            android:id="@+id/tvCustomerPhone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="📞 No disponible"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:layout_marginTop="2dp" />
-
         <!-- Dirección -->
         <TextView
             android:id="@+id/tvDeliveryAddress"
@@ -62,7 +78,7 @@
             android:text="📍 Dirección"
             android:textSize="12sp"
             android:textColor="#666666"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:maxLines="2"
             android:ellipsize="end" />
 
@@ -116,7 +132,7 @@
             android:layout_marginTop="2dp"
             android:visibility="gone" />
 
-        <!-- Botones de acción - Negros con texto blanco -->
+        <!-- Botones de acción -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

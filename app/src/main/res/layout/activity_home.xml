@@ -8,23 +8,30 @@
     android:fitsSystemWindows="true"
     tools:openDrawer="start">
 
-    <!-- Contenido principal -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="#FFFFFF">
 
-        <!-- Toolbar con menú hamburguesa y carrito -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#2E7D32"
-            app:titleTextColor="#FFFFFF"
-            app:title="Grun"
+            app:title=""
             app:navigationIcon="@drawable/ic_menu">
 
+            <!-- Logo centrado -->
+            <ImageView
+                android:layout_width="200dp"
+                android:layout_height="84dp"
+                android:layout_gravity="start"
+                android:layout_marginBottom="6dp"
+                android:src="@drawable/logooficial"
+                android:scaleType="fitCenter" />
+
+            <!-- Carrito a la derecha -->
             <ImageView
                 android:id="@+id/ivCart"
                 android:layout_width="32dp"
@@ -38,218 +45,148 @@
 
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Dirección del usuario -->
+        <!-- Dirección -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="4dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="2dp"
             android:background="#FFFFFF"
             android:gravity="center_vertical">
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📍 "
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textColor="#2E7D32" />
-
                 <TextView
                     android:id="@+id/tvDireccion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cargando dirección..."
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textColor="#757575"
                     android:maxLines="1"
                     android:ellipsize="end" />
-
             </LinearLayout>
-
             <TextView
                 android:id="@+id/tvCambiarDireccion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cambiar"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="#2E7D32"
                 android:textStyle="bold"
-                android:padding="8dp"
+                android:padding="6dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:background="?android:attr/selectableItemBackground"
                 android:layout_marginStart="8dp" />
-
         </LinearLayout>
 
-        <!-- Buscador predictivo -->
+        <!-- Buscador -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:background="#FFFFFF"
             android:gravity="center_vertical">
-
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@drawable/ic_search"
                 app:tint="#9E9E9E"
                 android:layout_marginEnd="8dp" />
-
             <AutoCompleteTextView
                 android:id="@+id/searchView"
                 android:layout_width="0dp"
-                android:layout_height="44dp"
+                android:layout_height="40dp"
                 android:layout_weight="1"
                 android:background="@drawable/search_background"
                 android:paddingHorizontal="12dp"
                 android:hint="Buscar producto..."
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="#212121"
                 android:textColorHint="#9E9E9E"
                 android:completionThreshold="1"
                 android:inputType="text"
                 android:imeOptions="actionSearch"
                 android:singleLine="true" />
-
         </LinearLayout>
 
-        <!-- Productos populares -->
+        <!-- Productos populares ACHICADOS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="8dp"
-            android:paddingBottom="12dp"
+            android:paddingBottom="4dp"
             android:background="#FFFFFF">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Productos populares"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 android:textColor="#2E7D32"
                 android:paddingStart="4dp"
-                android:paddingBottom="8dp" />
-
+                android:paddingBottom="4dp" />
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvProductChips"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingVertical="4dp"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
         </LinearLayout>
 
-        <!-- Botones de acción -->
+        <!-- Botones de acción ACHICADOS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:padding="12dp"
+            android:paddingVertical="4dp"
             android:background="#FFFFFF">
-
             <LinearLayout
                 android:id="@+id/llMisPedidos"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@drawable/ic_orders"
-                    app:tint="#2E7D32" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mis pedidos"
-                    android:textSize="12sp"
-                    android:textColor="#2E7D32"
-                    android:layout_marginTop="4dp" />
-
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:orientation="vertical" android:gravity="center"
+                android:clickable="true" android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" android:padding="6dp">
+                <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_orders" app:tint="#2E7D32" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mis pedidos" android:textSize="11sp" android:textColor="#2E7D32" android:layout_marginTop="2dp" />
             </LinearLayout>
-
             <LinearLayout
                 android:id="@+id/llMercado"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@drawable/ic_store"
-                    app:tint="#2E7D32" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mercado"
-                    android:textSize="12sp"
-                    android:textColor="#2E7D32"
-                    android:layout_marginTop="4dp" />
-
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:orientation="vertical" android:gravity="center"
+                android:clickable="true" android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" android:padding="6dp">
+                <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_store" app:tint="#2E7D32" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mercado" android:textSize="11sp" android:textColor="#2E7D32" android:layout_marginTop="2dp" />
             </LinearLayout>
-
             <LinearLayout
                 android:id="@+id/llPromociones"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@drawable/ic_promo"
-                    app:tint="#2E7D32" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Promociones"
-                    android:textSize="12sp"
-                    android:textColor="#2E7D32"
-                    android:layout_marginTop="4dp" />
-
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:orientation="vertical" android:gravity="center"
+                android:clickable="true" android:focusable="true"
+                android:background="?android:attr/selectableItemBackground" android:padding="6dp">
+                <ImageView android:layout_width="26dp" android:layout_height="26dp" android:src="@drawable/ic_promo" app:tint="#2E7D32" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Promociones" android:textSize="11sp" android:textColor="#2E7D32" android:layout_marginTop="2dp" />
             </LinearLayout>
-
         </LinearLayout>
 
         <!-- Scroll principal -->
@@ -257,7 +194,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="12dp"
+            android:padding="10dp"
             android:fillViewport="true">
 
             <LinearLayout
@@ -265,406 +202,146 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- ── BANNER PEDIDO ACTIVO (nuevo) ── -->
+                <!-- Banner pedido activo -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardActiveOrder"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:visibility="gone"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#E8F5E9">
-
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp" android:visibility="gone"
+                    app:cardCornerRadius="16dp" app:cardElevation="4dp" app:cardBackgroundColor="#E8F5E9">
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="14dp"
-                        android:gravity="center_vertical"
-                        android:clickable="true"
-                        android:focusable="true"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical"
+                        android:clickable="true" android:focusable="true"
                         android:background="?android:attr/selectableItemBackground">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="🛵  Tu pedido está en camino"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textColor="#1B5E20"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Ver mapa →"
-                            android:textSize="13sp"
-                            android:textColor="#2E7D32"
-                            android:textStyle="bold"/>
-
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                            android:text="🛵  Tu pedido está en camino" android:textSize="13sp" android:textStyle="bold" android:textColor="#1B5E20" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Ver mapa →" android:textSize="12sp" android:textColor="#2E7D32" android:textStyle="bold" />
                     </LinearLayout>
-
                 </androidx.cardview.widget.CardView>
 
-                <!-- Título categorías -->
+                <!-- Categorías -->
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Categorías"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32"
-                    android:layout_marginBottom="8dp"
-                    android:paddingStart="4dp" />
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Categorías" android:textSize="13sp" android:textStyle="bold"
+                    android:textColor="#2E7D32" android:layout_marginBottom="4dp" android:paddingStart="4dp" />
 
                 <GridLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:columnCount="3"
-                    android:rowCount="2"
-                    android:alignmentMode="alignMargins"
-                    android:columnOrderPreserved="false"
-                    android:padding="2dp">
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:columnCount="3" android:rowCount="2"
+                    android:alignmentMode="alignMargins" android:columnOrderPreserved="false" android:padding="2dp">
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardFrutas"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivFrutas"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_mango"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Frutas"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardFrutas"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivFrutas" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_mango" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Frutas" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardVerduras"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivVerduras"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_tomate"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Verduras"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardVerduras"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivVerduras" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_tomate" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Verduras" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardGranos"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivGranos"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_frijoles"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Granos"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardGranos"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivGranos" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_frijoles" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Granos" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardRaices"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivRaices"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_papa"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Raíces"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardRaices"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivRaices" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_papa" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raíces" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardHierbas"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivHierbas"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_cilantro"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Hierbas"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardHierbas"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivHierbas" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_cilantro" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Hierbas" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/cardCultivos"
-                        android:layout_width="0dp"
-                        android:layout_height="70dp"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="3dp"
-                        android:layout_rowWeight="1"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?android:attr/selectableItemBackground"
-                        app:cardCornerRadius="8dp"
-                        app:cardElevation="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:padding="4dp">
-
-                            <ImageView
-                                android:id="@+id/ivCultivos"
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:src="@drawable/ic_cafe"
-                                android:layout_marginEnd="4dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Cultivos"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
+                    <androidx.cardview.widget.CardView android:id="@+id/cardCultivos"
+                        android:layout_width="0dp" android:layout_height="55dp"
+                        android:layout_columnWeight="1" android:layout_margin="3dp" android:layout_rowWeight="1"
+                        android:clickable="true" android:focusable="true" android:foreground="?android:attr/selectableItemBackground"
+                        app:cardCornerRadius="8dp" app:cardElevation="1dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
+                            <ImageView android:id="@+id/ivCultivos" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_cafe" android:layout_marginEnd="4dp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cultivos" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
 
                 </GridLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ofertas especiales"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:paddingStart="4dp" />
-
+                <!-- Banner 180dp sin título -->
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/viewPagerBanners"
                     android:layout_width="match_parent"
-                    android:layout_height="350dp"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_height="240dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="6dp" />
 
                 <LinearLayout
                     android:id="@+id/layoutIndicator"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:orientation="horizontal"
+                    android:layout_marginBottom="12dp" />
 
                 <ProgressBar
                     android:id="@+id/progressBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="24dp"
-                    android:visibility="gone" />
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_gravity="start" android:layout_marginTop="24dp" android:visibility="gone" />
 
                 <!-- Footer -->
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="24dp"
-                    android:layout_marginTop="16dp"
-                    android:background="#F5F5F5">
-
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:gravity="center"
+                    android:padding="20dp" android:layout_marginTop="12dp" android:background="#F5F5F5">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="By German App"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32"
-                        android:layout_marginBottom="16dp" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center">
-
-                        <TextView
-                            android:id="@+id/tvSocio"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Conviértete en Socio"
-                            android:textSize="14sp"
-                            android:textColor="#2E7D32"
-                            android:padding="8dp"
-                            android:clickable="true"
-                            android:focusable="true"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="By German App" android:textSize="14sp" android:textStyle="bold"
+                        android:textColor="#2E7D32" android:layout_marginBottom="12dp" />
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center">
+                        <TextView android:id="@+id/tvSocio" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Conviértete en Socio" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:padding="8dp" android:clickable="true" android:focusable="true"
                             android:background="?android:attr/selectableItemBackground" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="|"
-                            android:textSize="14sp"
-                            android:textColor="#757575"
-                            android:padding="4dp" />
-
-                        <TextView
-                            android:id="@+id/tvPrivacidad"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Política de Privacidad"
-                            android:textSize="14sp"
-                            android:textColor="#2E7D32"
-                            android:padding="8dp"
-                            android:clickable="true"
-                            android:focusable="true"
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="|" android:textSize="13sp" android:textColor="#757575" android:padding="4dp" />
+                        <TextView android:id="@+id/tvPrivacidad" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Política de Privacidad" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:padding="8dp" android:clickable="true" android:focusable="true"
                             android:background="?android:attr/selectableItemBackground" />
-
                     </LinearLayout>
-
                 </LinearLayout>
 
             </LinearLayout>
-
         </androidx.core.widget.NestedScrollView>
 
     </LinearLayout>

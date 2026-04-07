@@ -9,19 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.Banner
 
-class BannerAdapter(private val banners: List<Banner>) :
-    RecyclerView.Adapter<BannerAdapter.BannerViewHolder>() {
+class BannerAdapter(
+    private val banners: List<Banner>,
+    private val onBannerClick: (Banner) -> Unit
+) : RecyclerView.Adapter<BannerAdapter.BannerViewHolder>() {
 
     class BannerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val ivBanner: ImageView = itemView.findViewById(R.id.ivBanner)
-        private val tvTitle: TextView = itemView.findViewById(R.id.tvBannerTitle)
-        private val tvDescription: TextView = itemView.findViewById(R.id.tvBannerDescription)
-
-        fun bind(banner: Banner) {
-            ivBanner.setImageResource(banner.imageRes)
-            tvTitle.text = banner.title
-            tvDescription.text = banner.description
-        }
+        val ivBanner: ImageView = itemView.findViewById(R.id.ivBanner)
+        val tvTitle: TextView = itemView.findViewById(R.id.tvBannerTitle)
+        val tvDescription: TextView = itemView.findViewById(R.id.tvBannerDescription)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BannerViewHolder {
@@ -31,7 +27,11 @@ class BannerAdapter(private val banners: List<Banner>) :
     }
 
     override fun onBindViewHolder(holder: BannerViewHolder, position: Int) {
-        holder.bind(banners[position])
+        val banner = banners[position]
+        holder.ivBanner.setImageResource(banner.imageRes)
+        holder.tvTitle.text = banner.title
+        holder.tvDescription.text = banner.description
+        holder.itemView.setOnClickListener { onBannerClick(banner) }
     }
 
     override fun getItemCount() = banners.size

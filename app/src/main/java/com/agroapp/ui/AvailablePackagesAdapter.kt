@@ -50,19 +50,40 @@ class AvailablePackagesAdapter(
 
         fun bind(packageItem: DynamicPackage) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-            val pricePerOrder = 2.50
-            val totalPayment = packageItem.current_size * pricePerOrder
-            val driverPayment = totalPayment * 0.90
 
-            tvSize.text = "Paquete #${packageItem.id.takeLast(8)}"
-            tvOrders.text = "${packageItem.current_size}/${packageItem.max_size}"
-            tvPayment.text = "${formatter.format(driverPayment)} (${packageItem.current_size} × ${formatter.format(pricePerOrder * 0.90)})"
+            val numOrders = packageItem.current_size
+            val driverBase = numOrders * 2.50 * 0.90
+            val totalTips = packageItem.orders?.sumOf { it.tip_amount } ?: 0.0
+            val totalGanancia = driverBase + totalTips
+
+            tvSize.text = "Paquete #${packageItem.id.takeLast(8).uppercase()}"
+            tvOrders.text = "$numOrders pedidos"
+
+            // ✅ Zona y ventana de entrega visible para el driver
+            val zone = when (packageItem.zone) {
+                "norte"  -> "\uD83D\uDDFA\uFE0F Zona Norte"
+                "sur"    -> "\uD83D\uDDFA\uFE0F Zona Sur"
+                "centro" -> "\uD83D\uDDFA\uFE0F Zona Centro"
+                else     -> if (!packageItem.zone.isNullOrEmpty()) "\uD83D\uDDFA\uFE0F ${packageItem.zone}" else ""
+            }
+            val date = packageItem.delivery_date ?: ""
+            val start = packageItem.delivery_window_start ?: ""
+            val end = packageItem.delivery_window_end ?: ""
+
+            val paymentText = buildString {
+                if (zone.isNotEmpty()) append("$zone\n")
+                if (date.isNotEmpty()) append("\u23F0 Entrega: $date  $start \u2013 $end\n")
+                append("\uD83D\uDCB0 Env\u00edo:      ${formatter.format(driverBase)}\n")
+                if (totalTips > 0) append("\uD83D\uDCB8 Propinas: ${formatter.format(totalTips)}\n")
+                append("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n")
+                append("\uD83D\uDCCA Ganancia: ${formatter.format(totalGanancia)}")
+            }
+            tvPayment.text = paymentText
             tvCreatedAt.text = "Creado: ${formatDate(packageItem.created_at)}"
 
             val isAvailable = packageItem.status == "available"
 
             lateinit var ordersAdapter: PackageOrderAdapter
-
             ordersAdapter = PackageOrderAdapter(
                 orders = packageItem.orders ?: emptyList(),
                 onStatusChange = { orderId, newStatus, photoUri ->
@@ -76,10 +97,7 @@ class AvailablePackagesAdapter(
 
             rvOrdersInPackage.layoutManager = LinearLayoutManager(itemView.context)
             rvOrdersInPackage.adapter = ordersAdapter
-
-            btnTake.setOnClickListener {
-                onTakeClick(packageItem)
-            }
+            btnTake.setOnClickListener { onTakeClick(packageItem) }
         }
 
         private fun formatDate(dateString: String): String {
@@ -87,9 +105,7 @@ class AvailablePackagesAdapter(
                 val date = java.time.format.DateTimeFormatter.ISO_DATE_TIME.parse(dateString)
                 val localDate = java.time.LocalDateTime.from(date)
                 localDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm"))
-            } catch (e: Exception) {
-                dateString
-            }
+            } catch (e: Exception) { dateString }
         }
     }
 }
@@ -140,26 +156,33 @@ class PackageOrderAdapter(
 
         fun bind(order: DynamicPackageOrder, position: Int) {
             val formatter = NumberFormat.getCurrencyInstance(Locale.US)
-            tvCustomerName.text = "👤 ${order.customer_name.ifEmpty { "Cliente" }}"
-            tvCustomerPhone.text = "📞 ${order.customer_phone.ifEmpty { "No disponible" }}"
-            tvDeliveryAddress.text = "📍 ${order.delivery_address ?: "Sin dirección"}"
-            tvTotalAmount.text = "💰 Total: ${formatter.format(order.total_amount)}"
 
-            if (order.tip_amount > 0) {
+            tvCustomerName.text = "\uD83D\uDC64 ${order.customer_name.ifEmpty { "Cliente" }}"
+            tvCustomerPhone.text = "\uD83D\uDCDE ${order.customer_phone.ifEmpty { "No disponible" }}"
+            tvDeliveryAddress.text = "\uD83D\uDCCD ${order.delivery_address ?: "Sin direcci\u00f3n"}"
+
+            // ✅ Ventana de entrega por pedido
+            val windowDate = order.delivery_window_date ?: ""
+            val windowStart = order.delivery_window_start ?: ""
+            val windowEnd = order.delivery_window_end ?: ""
+            val windowLine = if (windowDate.isNotEmpty()) "\n\u23F0 $windowDate  $windowStart \u2013 $windowEnd" else ""
+
+            tvTotalAmount.text = "\uD83D\uDED2 Total: ${formatter.format(order.total_amount)}$windowLine"
+
+            val tip = order.tip_amount
+            if (tip > 0) {
                 tvTipAmount.visibility = View.VISIBLE
-                tvTipAmount.text = "💸 Propina: ${formatter.format(order.tip_amount)}"
+                tvTipAmount.text = "\uD83D\uDCB8 Propina: ${formatter.format(tip)}"
             } else {
                 tvTipAmount.visibility = View.GONE
             }
 
-            // Botón WhatsApp
             if (order.customer_phone.isNotEmpty() && order.customer_phone != "No disponible") {
                 btnWhatsApp.visibility = View.VISIBLE
                 btnWhatsApp.setOnClickListener {
                     val phone = order.customer_phone.replace(Regex("[^0-9]"), "")
-                    val url = "https://wa.me/$phone?text=Hola%20${order.customer_name}%2C%20soy%20tu%20repartidor%20de%20AgroApp.%20Estoy%20en%20camino%20con%20tu%20pedido."
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    itemView.context.startActivity(intent)
+                    val url = "https://wa.me/$phone?text=Hola%20${order.customer_name}%2C%20soy%20tu%20repartidor%20de%20Grun.%20Estoy%20en%20camino%20con%20tu%20pedido."
+                    itemView.context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
             } else {
                 btnWhatsApp.visibility = View.GONE
@@ -173,33 +196,16 @@ class PackageOrderAdapter(
                 btnWhatsApp.visibility = View.GONE
             } else {
                 tvOrderStatus.visibility = View.VISIBLE
-                updateStatusUI("pending")
-
+                tvOrderStatus.text = "\uD83D\uDE9A En camino"
+                tvOrderStatus.setTextColor(itemView.context.getColor(android.R.color.black))
+                tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_orange_light))
                 btnMarkPending.visibility = View.VISIBLE
                 btnMarkDelivered.visibility = View.VISIBLE
                 btnTakePhoto.visibility = View.VISIBLE
 
-                btnMarkPending.setOnClickListener {
-                    onStatusChange(order.order_id, "pending", null)
-                }
-
-                btnMarkDelivered.setOnClickListener {
-                    onStatusChange(order.order_id, "delivered", null)
-                }
-
-                btnTakePhoto.setOnClickListener {
-                    onTakePhotoClick(order.order_id, position)
-                }
-            }
-        }
-
-        private fun updateStatusUI(status: String) {
-            when (status) {
-                "pending" -> {
-                    tvOrderStatus.text = "🚚 En camino"
-                    tvOrderStatus.setTextColor(itemView.context.getColor(android.R.color.black))
-                    tvOrderStatus.setBackgroundColor(itemView.context.getColor(android.R.color.holo_orange_light))
-                }
+                btnMarkPending.setOnClickListener { onStatusChange(order.order_id, "pending", null) }
+                btnMarkDelivered.setOnClickListener { onStatusChange(order.order_id, "delivered", null) }
+                btnTakePhoto.setOnClickListener { onTakePhotoClick(order.order_id, position) }
             }
         }
     }

@@ -4,72 +4,107 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F1F8E9">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="INICIAR SESIÓN"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:background="#2E7D32"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+    android:background="#000000">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:padding="16dp">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="28dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEmail"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Correo electrónico"
-                android:inputType="textEmailAddress"
-                android:padding="12dp"
-                android:background="@android:drawable/editbox_background"
-                android:layout_marginBottom="16dp" />
+            <!-- Logo -->
+            <ImageView
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:src="@drawable/logooficial"
+                android:scaleType="fitCenter"
+                android:layout_marginTop="48dp"
+                android:layout_marginBottom="8dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Iniciar sesi\u00f3n"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="36dp" />
+
+            <!-- Email -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Contraseña"
-                android:inputType="textPassword"
-                android:padding="12dp"
-                android:background="@android:drawable/editbox_background"
-                android:layout_marginBottom="16dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxStrokeColor="#2E7D32"
+                app:boxStrokeWidth="1.5dp"
+                app:hintTextColor="#2E7D32"
+                app:boxBackgroundColor="#1A1A1A"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Correo electr\u00f3nico"
+                    android:inputType="textEmailAddress"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#888888"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Contraseña con ojito -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:boxStrokeColor="#2E7D32"
+                app:boxStrokeWidth="1.5dp"
+                app:hintTextColor="#2E7D32"
+                app:boxBackgroundColor="#1A1A1A"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#2E7D32"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Contrase\u00f1a"
+                    android:inputType="textPassword"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#888888"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
                 android:id="@+id/tvError"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#F44336"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:visibility="gone"
                 android:gravity="center"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="12dp" />
 
-            <com.google.android.material.button.MaterialButton
+            <Button
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:text="INICIAR SESIÓN"
-                app:backgroundTint="#2E7D32"
+                android:layout_height="52dp"
+                android:text="INICIAR SESI\u00d3N"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#2E7D32"
                 android:layout_marginBottom="16dp" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
                 android:visibility="gone"
                 android:layout_marginBottom="16dp" />
 
@@ -77,15 +112,13 @@
                 android:id="@+id/tvRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
-                android:layout_gravity="center"
-                android:text="¿No tienes cuenta? Regístrate"
-                android:textColor="#388E3C"
+                android:text="\u00bfNo tienes cuenta? Reg\u00edstrate"
+                android:textColor="#2E7D32"
                 android:gravity="center"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="true"
+                android:layout_marginBottom="32dp" />
 
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
-
 </LinearLayout>

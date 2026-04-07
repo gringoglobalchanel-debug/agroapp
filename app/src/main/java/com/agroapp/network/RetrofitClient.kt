@@ -1,4 +1,4 @@
-ï»¿package com.agroapp.network
+package com.agroapp.network
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
-    private const val BASE_URL =  "https://agroapp-backend-bffq.onrender.com/"
+    private const val BASE_URL = "https://agroapp-backend-production.up.railway.app/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -42,8 +42,9 @@ object SessionManager {
     private const val KEY_USER_ADDRESS = "user_address"
     private const val KEY_USER_PHONE = "phone"
     private const val KEY_USER_TYPE = "user_type"
+    private const val KEY_AVATAR_URL = "avatar_url"  // ? NUEVO
 
-    // Nuevas keys para ubicaciÃ³n de entrega
+    // Keys para ubicación de entrega
     private const val KEY_DELIVERY_LAT = "delivery_lat"
     private const val KEY_DELIVERY_LNG = "delivery_lng"
     private const val KEY_DELIVERY_ADDRESS = "delivery_address"
@@ -61,7 +62,8 @@ object SessionManager {
         email: String,
         role: String,
         address: String?,
-        userType: String = "cliente"
+        userType: String = "cliente",
+        avatarUrl: String? = null   // ? NUEVO parámetro opcional
     ) {
         prefs.edit()
             .putString(KEY_TOKEN, token)
@@ -71,6 +73,7 @@ object SessionManager {
             .putString(KEY_USER_ROLE, role)
             .putString(KEY_USER_ADDRESS, address ?: "")
             .putString(KEY_USER_TYPE, userType)
+            .putString(KEY_AVATAR_URL, avatarUrl ?: "")  // ? NUEVO
             .apply()
     }
 
@@ -82,7 +85,17 @@ object SessionManager {
             .apply()
     }
 
-    // ==================== MÃ‰TODOS PARA UBICACIÃ“N DE ENTREGA ====================
+    // ? NUEVO — guarda la URL del avatar localmente
+    fun saveAvatarUrl(avatarUrl: String) {
+        prefs.edit()
+            .putString(KEY_AVATAR_URL, avatarUrl)
+            .apply()
+    }
+
+    // ? NUEVO — lee la URL del avatar guardada
+    fun getAvatarUrl(): String = prefs.getString(KEY_AVATAR_URL, "") ?: ""
+
+    // ==================== UBICACIÓN DE ENTREGA ====================
 
     fun saveDeliveryLocation(lat: Double, lng: Double, address: String) {
         prefs.edit()
@@ -92,17 +105,9 @@ object SessionManager {
             .apply()
     }
 
-    fun getDeliveryLatitude(): Double {
-        return prefs.getFloat(KEY_DELIVERY_LAT, 0f).toDouble()
-    }
-
-    fun getDeliveryLongitude(): Double {
-        return prefs.getFloat(KEY_DELIVERY_LNG, 0f).toDouble()
-    }
-
-    fun getDeliveryAddress(): String {
-        return prefs.getString(KEY_DELIVERY_ADDRESS, "") ?: ""
-    }
+    fun getDeliveryLatitude(): Double = prefs.getFloat(KEY_DELIVERY_LAT, 0f).toDouble()
+    fun getDeliveryLongitude(): Double = prefs.getFloat(KEY_DELIVERY_LNG, 0f).toDouble()
+    fun getDeliveryAddress(): String = prefs.getString(KEY_DELIVERY_ADDRESS, "") ?: ""
 
     fun clearDeliveryLocation() {
         prefs.edit()
@@ -112,7 +117,7 @@ object SessionManager {
             .apply()
     }
 
-    // ==================== MÃ‰TODOS EXISTENTES ====================
+    // ==================== MÉTODOS EXISTENTES ====================
 
     fun getToken(): String = "Bearer ${prefs.getString(KEY_TOKEN, "") ?: ""}"
     fun getUserId(): String = prefs.getString(KEY_USER_ID, "") ?: ""

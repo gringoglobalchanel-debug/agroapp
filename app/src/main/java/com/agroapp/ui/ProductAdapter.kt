@@ -12,6 +12,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.Product
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 
 class ProductAdapter(
     private var products: List<Product>,
@@ -54,19 +56,28 @@ class ProductAdapter(
         val product = products[position]
         val qty = quantities[product.id] ?: 0.0
 
-        // Imagen del producto
-        holder.ivProduct.setImageResource(ProductImageMapper.getImage(product.name))
+        // ✅ Si tiene imagen en Supabase la carga con Glide, si no usa el drawable local
+        if (!product.imageUrl.isNullOrEmpty()) {
+            Glide.with(holder.ivProduct.context)
+                .load(product.imageUrl)
+                .placeholder(ProductImageMapper.getImage(product.name))
+                .error(ProductImageMapper.getImage(product.name))
+                .centerCrop()
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .into(holder.ivProduct)
+        } else {
+            holder.ivProduct.setImageResource(ProductImageMapper.getImage(product.name))
+        }
+
         holder.tvName.text = product.name
         holder.tvPrice.text = "$${"%.2f".format(product.price)}"
         holder.tvUnit.text = "por ${product.unit}"
         holder.tvQuantity.text = formatQty(qty)
 
-        // Estado botones
         holder.btnPlus.isEnabled = canOrder
         holder.btnMinus.isEnabled = canOrder
         holder.btnAdd.alpha = if (canOrder) 1.0f else 0.5f
 
-        // Verificar si ya está en carrito
         val inCart = cartMap.entries.find { it.key.id == product.id }?.value ?: 0.0
         if (inCart > 0) {
             holder.btnAdd.text = "En carrito: ${formatQty(inCart)}"

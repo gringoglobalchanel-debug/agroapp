@@ -4,11 +4,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.ProductWithInventory
+import com.bumptech.glide.Glide
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -18,11 +20,24 @@ class ProductsAdminAdapter(
     private val onDeleteClick: (ProductWithInventory) -> Unit
 ) : RecyclerView.Adapter<ProductsAdminAdapter.ProductViewHolder>() {
 
-    private var products: List<ProductWithInventory> = emptyList()
+    private var allProducts: List<ProductWithInventory> = emptyList()
+    private var filteredProducts: List<ProductWithInventory> = emptyList()
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
     fun submitList(list: List<ProductWithInventory>) {
-        products = list
+        // ✅ Ordenar alfabéticamente
+        allProducts = list.sortedBy { it.name.lowercase() }
+        filteredProducts = allProducts
+        notifyDataSetChanged()
+    }
+
+    // ✅ Buscador
+    fun filter(query: String) {
+        filteredProducts = if (query.isEmpty()) {
+            allProducts
+        } else {
+            allProducts.filter { it.name.contains(query, ignoreCase = true) || it.category?.contains(query, ignoreCase = true) == true }
+        }
         notifyDataSetChanged()
     }
 
@@ -33,14 +48,14 @@ class ProductsAdminAdapter(
     }
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
-        val product = products[position]
-        holder.bind(product)
+        holder.bind(filteredProducts[position])
     }
 
-    override fun getItemCount(): Int = products.size
+    override fun getItemCount(): Int = filteredProducts.size
 
     inner class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val cardView: CardView = itemView.findViewById(R.id.cardView)
+        private val ivProduct: ImageView = itemView.findViewById(R.id.ivProductImage)
         private val tvName: TextView = itemView.findViewById(R.id.tvProductName)
         private val tvPrice: TextView = itemView.findViewById(R.id.tvProductPrice)
         private val tvStock: TextView = itemView.findViewById(R.id.tvProductStock)
@@ -53,27 +68,38 @@ class ProductsAdminAdapter(
         fun bind(product: ProductWithInventory) {
             tvName.text = product.name
             tvPrice.text = formatter.format(product.price)
-            tvCategory.text = product.category ?: "Sin categoría"
-            tvUnit.text = product.unit
+            tvCategory.text = product.category ?: "Sin categor\u00eda"
+            tvUnit.text = "por ${product.unit}"
+
+            // ✅ Cargar imagen desde Supabase
+            if (!product.imageUrl.isNullOrEmpty()) {
+                Glide.with(itemView.context)
+                    .load(product.imageUrl)
+                    .placeholder(R.drawable.ic_product_placeholder)
+                    .error(R.drawable.ic_product_placeholder)
+                    .centerCrop()
+                    .into(ivProduct)
+            } else {
+                ivProduct.setImageResource(R.drawable.ic_product_placeholder)
+            }
 
             val stock = product.stock ?: 0.0
             val minStock = product.minStock ?: 0.0
+            val stockText = if (stock % 1 == 0.0) stock.toInt().toString() else "%.1f".format(stock)
 
             when {
                 stock <= 0 -> {
-                    tvStock.text = "🚫 AGOTADO"
+                    tvStock.text = "\uD83D\uDEAB Agotado"
                     tvStock.setTextColor(itemView.context.getColor(android.R.color.holo_red_dark))
                     cardView.setCardBackgroundColor(itemView.context.getColor(R.color.red_50))
                 }
                 stock <= minStock -> {
-                    val stockText = if (stock % 1 == 0.0) stock.toInt().toString() else String.format("%.2f", stock)
-                    tvStock.text = "⚠️ Stock bajo:  "
+                    tvStock.text = "\u26A0\uFE0F Stock bajo: $stockText"
                     tvStock.setTextColor(itemView.context.getColor(android.R.color.holo_orange_dark))
                     cardView.setCardBackgroundColor(itemView.context.getColor(R.color.yellow_50))
                 }
                 else -> {
-                    val stockText = if (stock % 1 == 0.0) stock.toInt().toString() else String.format("%.2f", stock)
-                    tvStock.text = "✅ Stock:  "
+                    tvStock.text = "\u2705 Stock: $stockText"
                     tvStock.setTextColor(itemView.context.getColor(android.R.color.holo_green_dark))
                     cardView.setCardBackgroundColor(itemView.context.getColor(android.R.color.white))
                 }

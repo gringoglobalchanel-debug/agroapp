@@ -8,6 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.Product
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 
 class ProductChipAdapter(
     private var products: List<Product>,
@@ -28,7 +30,20 @@ class ProductChipAdapter(
 
     override fun onBindViewHolder(holder: ChipViewHolder, position: Int) {
         val product = products[position]
-        holder.ivProduct.setImageResource(ProductImageMapper.getImage(product.name))
+
+        // ✅ Cargar imagen desde Supabase si existe, sino usar drawable local
+        if (!product.imageUrl.isNullOrEmpty()) {
+            Glide.with(holder.ivProduct.context)
+                .load(product.imageUrl)
+                .placeholder(ProductImageMapper.getImage(product.name))
+                .error(ProductImageMapper.getImage(product.name))
+                .centerCrop()
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .into(holder.ivProduct)
+        } else {
+            holder.ivProduct.setImageResource(ProductImageMapper.getImage(product.name))
+        }
+
         holder.tvName.text = product.name
         holder.tvPrice.text = "$${"%.2f".format(product.price)}/${product.unit}"
         holder.itemView.setOnClickListener { onClick(product) }

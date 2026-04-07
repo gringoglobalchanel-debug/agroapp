@@ -5,16 +5,17 @@ import com.google.gson.annotations.SerializedName
 // ==================== DASHBOARD ====================
 
 data class AdminDashboardStats(
-    @SerializedName("total_products") val totalProducts: Int,
-    @SerializedName("low_stock_products") val lowStockProducts: Int,
-    @SerializedName("out_of_stock_products") val outOfStockProducts: Int,
-    @SerializedName("total_orders_today") val totalOrdersToday: Int,
-    @SerializedName("total_revenue_today") val totalRevenueToday: Double,
-    @SerializedName("total_orders_week") val totalOrdersWeek: Int,
-    @SerializedName("total_revenue_week") val totalRevenueWeek: Double,
-    @SerializedName("total_drivers") val totalDrivers: Int,
-    @SerializedName("active_drivers") val activeDrivers: Int,
-    @SerializedName("pending_payments") val pendingPayments: Double
+    @SerializedName("totalProducts") val totalProducts: Int,
+    @SerializedName("lowStockProducts") val lowStockProducts: Int,
+    @SerializedName("outOfStockProducts") val outOfStockProducts: Int,
+    @SerializedName("totalOrdersToday") val totalOrdersToday: Int,
+    @SerializedName("totalRevenueToday") val totalRevenueToday: Double,
+    @SerializedName("totalOrdersWeek") val totalOrdersWeek: Int,
+    @SerializedName("totalRevenueWeek") val totalRevenueWeek: Double,
+    @SerializedName("totalDrivers") val totalDrivers: Int,
+    @SerializedName("activeDrivers") val activeDrivers: Int,
+    @SerializedName("pendingPayments") val pendingPayments: Double,
+    @SerializedName("pendingYappiApprovals") val pendingYappiApprovals: Int? = 0
 )
 
 // ==================== PRODUCTOS CON INVENTARIO ====================

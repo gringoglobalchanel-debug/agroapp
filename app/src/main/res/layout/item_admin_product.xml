@@ -11,111 +11,118 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
 
-        <!-- Fila: Nombre y Precio -->
+        <!-- Imagen del producto -->
+        <ImageView
+            android:id="@+id/ivProductImage"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_product_placeholder"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Info -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvProductName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#1B5E20" />
+
+                <TextView
+                    android:id="@+id/tvProductPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#2E7D32" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/tvProductCategory"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="11sp"
+                    android:textColor="#888888" />
+
+                <TextView
+                    android:id="@+id/tvProductUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#888888" />
+
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvProductName"
-                android:layout_width="0dp"
+                android:id="@+id/tvProductStock"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Producto"
-                android:textSize="16sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="#1B5E20" />
+                android:layout_marginTop="6dp" />
 
-            <TextView
-                android:id="@+id/tvProductPrice"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="$0.00"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#2E7D32" />
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
 
-        </LinearLayout>
+                <Button
+                    android:id="@+id/btnEditProduct"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:text="Editar"
+                    android:textSize="11sp"
+                    android:backgroundTint="#2196F3"
+                    android:layout_marginEnd="4dp" />
 
-        <!-- Fila: Categoría y Unidad -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+                <Button
+                    android:id="@+id/btnUpdateStock"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:text="Stock"
+                    android:textSize="11sp"
+                    android:backgroundTint="#FF9800"
+                    android:layout_marginEnd="4dp" />
 
-            <TextView
-                android:id="@+id/tvProductCategory"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Categoría"
-                android:textSize="12sp"
-                android:textColor="#666666" />
+                <Button
+                    android:id="@+id/btnDeleteProduct"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:text="Eliminar"
+                    android:textSize="11sp"
+                    android:backgroundTint="#F44336" />
 
-            <TextView
-                android:id="@+id/tvProductUnit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="kg"
-                android:textSize="12sp"
-                android:textColor="#666666" />
-
-        </LinearLayout>
-
-        <!-- Stock -->
-        <TextView
-            android:id="@+id/tvProductStock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Stock: 0"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginTop="8dp"
-            android:padding="4dp" />
-
-        <!-- Botones -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="12dp">
-
-            <Button
-                android:id="@+id/btnEditProduct"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:text="✏️ Editar"
-                android:textSize="12sp"
-                android:backgroundTint="#2196F3"
-                android:layout_marginEnd="4dp" />
-
-            <Button
-                android:id="@+id/btnUpdateStock"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:text="📦 Stock"
-                android:textSize="12sp"
-                android:backgroundTint="#FF9800"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp" />
-
-            <Button
-                android:id="@+id/btnDeleteProduct"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:text="🗑️ Eliminar"
-                android:textSize="12sp"
-                android:backgroundTint="#F44336"
-                android:layout_marginStart="4dp" />
+            </LinearLayout>
 
         </LinearLayout>
 

@@ -1,78 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardElevation="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:background="@android:color/white">
 
-        <!-- Encabezado del paquete -->
-        <TextView
-            android:id="@+id/tvPackageSize"
+        <!-- Header verde igual que disponibles -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Paquete #12345678"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#1B5E20" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#2E7D32"
+            android:padding="12dp">
 
-        <TextView
-            android:id="@+id/tvOrdersCount"
+            <TextView
+                android:id="@+id/tvPackageSize"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/tvOrdersCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#2E7D32"
+                android:textStyle="bold"
+                android:background="#A5D6A7"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="15 pedidos"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp" />
+            android:orientation="vertical"
+            android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tomado"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"
-            android:textColor="#FF9800" />
+            <!-- Estado y fecha -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
 
-        <TextView
-            android:id="@+id/tvTakenAt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tomado: 21/03 10:30"
-            android:textSize="12sp"
-            android:textColor="#757575"
-            android:layout_marginTop="4dp" />
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="13sp"
+                    android:textColor="#FF9800"
+                    android:textStyle="bold" />
 
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="8dp" />
+                <TextView
+                    android:id="@+id/tvTakenAt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#757575" />
 
-        <!-- Título pedidos -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="📦 Detalles de la Entrega:"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="#333333" />
+            </LinearLayout>
 
-        <!-- Lista de pedidos -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvOrdersInMyPackage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:nestedScrollingEnabled="false" />
+            <!-- Divisor -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E0E0E0"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Titulo pedidos -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="&#128230; Detalles de la Entrega:"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Lista de pedidos -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvOrdersInMyPackage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Divisor -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E0E0E0"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ✅ Desglose de ganancias -->
+            <TextView
+                android:id="@+id/tvPayment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#212121"
+                android:lineSpacingExtra="4dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

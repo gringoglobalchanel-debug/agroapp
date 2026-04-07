@@ -1,4 +1,4 @@
-﻿package com.agroapp.viewmodel
+package com.agroapp.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -9,7 +9,7 @@ import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import kotlinx.coroutines.launch
 
-// ─── AUTH ───────────────────────────────────────────────────────────────────
+// --- AUTH -------------------------------------------------------------------
 
 class AuthViewModel : ViewModel() {
 
@@ -27,23 +27,18 @@ class AuthViewModel : ViewModel() {
                     val data = response.body()
                     if (data != null) {
                         SessionManager.saveSession(
-                            data.token,
-                            data.userId,
-                            data.name,
-                            email,
-                            data.role,
-                            data.address,
-                            data.userType
+                            data.token, data.userId, data.name, email,
+                            data.role, data.address, data.userType, data.avatarUrl
                         )
                         _authState.postValue(AuthState.Success(data.name, data.role, data.userType))
                     } else {
-                        _authState.postValue(AuthState.Error("Respuesta vacía del servidor"))
+                        _authState.postValue(AuthState.Error("Respuesta vacia del servidor"))
                     }
                 } else {
-                    _authState.postValue(AuthState.Error("Email o contraseña incorrectos"))
+                    _authState.postValue(AuthState.Error("Email o contrasena incorrectos"))
                 }
             } catch (e: Exception) {
-                _authState.postValue(AuthState.Error("Error de conexión: ${e.message}"))
+                _authState.postValue(AuthState.Error("Error de conexion: ${e.message}"))
             }
         }
     }
@@ -53,20 +48,15 @@ class AuthViewModel : ViewModel() {
             _authState.postValue(AuthState.Loading)
             try {
                 val response = api.register(RegisterRequest(email, password, fullName, phone, address, userType))
-                if (response.isSuccessful) {
-                    _authState.postValue(AuthState.Registered)
-                } else {
-                    _authState.postValue(AuthState.Error("Error al registrarse, intenta con otro email"))
-                }
+                if (response.isSuccessful) _authState.postValue(AuthState.Registered)
+                else _authState.postValue(AuthState.Error("Error al registrarse, intenta con otro email"))
             } catch (e: Exception) {
-                _authState.postValue(AuthState.Error("Error de conexión: ${e.message}"))
+                _authState.postValue(AuthState.Error("Error de conexion: ${e.message}"))
             }
         }
     }
 
-    fun resetState() {
-        _authState.value = AuthState.Idle
-    }
+    fun resetState() { _authState.value = AuthState.Idle }
 }
 
 sealed class AuthState {
@@ -77,7 +67,7 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-// ─── CARRITO COMPARTIDO ───────────────────────────────────────────────────────
+// --- CARRITO COMPARTIDO -------------------------------------------------------
 
 object CartRepository {
     val cart = MutableLiveData<MutableMap<Product, Double>>(mutableMapOf())
@@ -102,14 +92,11 @@ object CartRepository {
     }
 
     fun clear() { cart.value = mutableMapOf() }
-
     fun getItems(): Map<Product, Double> = cart.value ?: emptyMap()
-
-    fun getTotal(): Double =
-        cart.value?.entries?.sumOf { it.key.price * it.value } ?: 0.0
+    fun getTotal(): Double = cart.value?.entries?.sumOf { it.key.price * it.value } ?: 0.0
 }
 
-// ─── PRODUCTS & CART ─────────────────────────────────────────────────────────
+// --- PRODUCTS & CART ---------------------------------------------------------
 
 class ProductViewModel : ViewModel() {
 
@@ -143,7 +130,7 @@ class ProductViewModel : ViewModel() {
     fun getCartItemCount(): Int = CartRepository.getItems().size
 }
 
-// ─── ORDERS ──────────────────────────────────────────────────────────────────
+// --- ORDERS ------------------------------------------------------------------
 
 class OrderViewModel : ViewModel() {
 
@@ -154,6 +141,19 @@ class OrderViewModel : ViewModel() {
 
     private val _myOrders = MutableLiveData<List<Order>>()
     val myOrders: LiveData<List<Order>> = _myOrders
+
+    private fun parseErrorMessage(errorBody: String?): String {
+        if (errorBody.isNullOrEmpty()) return "Error al crear el pedido"
+        return when {
+            errorBody.contains("Stock insuficiente", ignoreCase = true) ->
+                "Producto agotado. No hay suficiente stock disponible."
+            errorBody.contains("check constraint", ignoreCase = true) ->
+                "Error interno al crear el pedido. Intenta de nuevo."
+            errorBody.contains("insuficiente", ignoreCase = true) ->
+                "Stock insuficiente para uno o mas productos."
+            else -> "Error al crear el pedido"
+        }
+    }
 
     fun createOrder(
         cartItems: Map<Product, Double>,
@@ -183,10 +183,11 @@ class OrderViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     _orderState.postValue(OrderState.Success(response.body()!!))
                 } else {
-                    _orderState.postValue(OrderState.Error("Error al crear el pedido"))
+                    val errorBody = response.errorBody()?.string()
+                    _orderState.postValue(OrderState.Error(parseErrorMessage(errorBody)))
                 }
             } catch (e: Exception) {
-                _orderState.postValue(OrderState.Error("Error de conexión"))
+                _orderState.postValue(OrderState.Error("Error de conexion"))
             }
         }
     }
@@ -217,69 +218,62 @@ class OrderViewModel : ViewModel() {
                     SessionManager.getToken(),
                     PaymentIntentRequest(amountInCents, "usd")
                 )
-                if (response.isSuccessful) {
-                    val clientSecret = response.body()?.clientSecret
-                    callback(true, clientSecret)
-                } else {
-                    callback(false, null)
-                }
+                if (response.isSuccessful) callback(true, response.body()?.clientSecret)
+                else callback(false, null)
             } catch (e: Exception) {
                 callback(false, null)
             }
         }
     }
 
-    // ==================== MÉTODOS PARA YAPPI ====================
+    // ==================== YAPPI ====================
 
+    // ✅ Ahora recibe y pasa las coordenadas
     fun createPendingYappiOrder(
         cartItems: Map<Product, Double>,
         deliveryAddress: String,
-        callback: (Boolean, String?, String?) -> Unit
+        tipAmount: Double = 0.0,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        callback: (Boolean, String?, String?, String?) -> Unit
     ) {
         viewModelScope.launch {
             try {
                 val items = cartItems.map { (product, qty) -> CartItem(product.id, qty) }
                 val response = api.createPendingYappiOrder(
                     SessionManager.getToken(),
-                    CreatePendingOrderRequest(items, deliveryAddress)
+                    CreatePendingOrderRequest(
+                        items = items,
+                        deliveryAddress = deliveryAddress,
+                        tipAmount = tipAmount,
+                        deliveryLatitude = latitude,
+                        deliveryLongitude = longitude
+                    )
                 )
                 if (response.isSuccessful) {
                     val body = response.body()
-                    if (body != null) {
-                        callback(true, body.orderId, body.referenceCode)
-                    } else {
-                        callback(false, null, null)
-                    }
+                    if (body != null) callback(true, body.orderId, body.referenceCode, null)
+                    else callback(false, null, null, "Error al procesar el pedido")
                 } else {
-                    callback(false, null, null)
+                    val errorBody = response.errorBody()?.string() ?: ""
+                    callback(false, null, null, parseErrorMessage(errorBody))
                 }
             } catch (e: Exception) {
-                callback(false, null, null)
+                callback(false, null, null, "Error de conexion")
             }
         }
     }
 
-    fun confirmYappiPayment(
-        orderId: String,
-        referenceCode: String,
-        callback: (Boolean, String) -> Unit
-    ) {
+    fun confirmYappiPayment(orderId: String, referenceCode: String, callback: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             try {
                 val response = api.confirmYappiPayment(
-                    SessionManager.getToken(),
-                    orderId,
-                    ConfirmPaymentRequest(referenceCode)
+                    SessionManager.getToken(), orderId, ConfirmPaymentRequest(referenceCode)
                 )
-                if (response.isSuccessful) {
-                    val message = response.body()?.message ?: "Pedido confirmado"
-                    callback(true, message)
-                } else {
-                    val errorMsg = response.errorBody()?.string() ?: "Error al confirmar pago"
-                    callback(false, errorMsg)
-                }
+                if (response.isSuccessful) callback(true, response.body()?.message ?: "Pedido confirmado")
+                else callback(false, response.errorBody()?.string() ?: "Error al confirmar pago")
             } catch (e: Exception) {
-                callback(false, "Error de conexión: ${e.message}")
+                callback(false, "Error de conexion: ${e.message}")
             }
         }
     }
@@ -288,19 +282,11 @@ class OrderViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = api.updateOrderStatus(
-                    SessionManager.getToken(),
-                    orderId,
-                    UpdateStatusRequest(newStatus)
+                    SessionManager.getToken(), orderId, UpdateStatusRequest(newStatus)
                 )
-                if (response.isSuccessful) {
-                    loadMyOrders()
-                    callback(true)
-                } else {
-                    callback(false)
-                }
-            } catch (e: Exception) {
-                callback(false)
-            }
+                if (response.isSuccessful) { loadMyOrders(); callback(true) }
+                else callback(false)
+            } catch (e: Exception) { callback(false) }
         }
     }
 }
@@ -312,7 +298,7 @@ sealed class OrderState {
     data class Error(val message: String) : OrderState()
 }
 
-// ─── VENDOR ──────────────────────────────────────────────────────────────────
+// --- VENDOR ------------------------------------------------------------------
 
 class VendorViewModel : ViewModel() {
 
@@ -352,16 +338,14 @@ class VendorViewModel : ViewModel() {
     fun updateOrderStatus(orderId: String, status: String) {
         viewModelScope.launch {
             try {
-                api.updateOrderStatus(
-                    SessionManager.getToken(), orderId, UpdateStatusRequest(status)
-                )
+                api.updateOrderStatus(SessionManager.getToken(), orderId, UpdateStatusRequest(status))
                 loadOrdersByClient()
             } catch (e: Exception) { }
         }
     }
 }
 
-// ─── PAYMENT ─────────────────────────────────────────────────────────────────
+// --- PAYMENT -----------------------------------------------------------------
 
 class PaymentViewModel : ViewModel() {
 
@@ -376,27 +360,21 @@ class PaymentViewModel : ViewModel() {
             try {
                 val amountInCents = (amount * 100).toInt()
                 val response = api.createPaymentIntent(
-                    SessionManager.getToken(),
-                    PaymentIntentRequest(amountInCents, "usd")
+                    SessionManager.getToken(), PaymentIntentRequest(amountInCents, "usd")
                 )
                 if (response.isSuccessful) {
-                    response.body()?.let {
-                        _paymentState.postValue(PaymentState.Ready(it.clientSecret))
-                    } ?: run {
-                        _paymentState.postValue(PaymentState.Error("Respuesta vacía del servidor"))
-                    }
+                    response.body()?.let { _paymentState.postValue(PaymentState.Ready(it.clientSecret)) }
+                        ?: run { _paymentState.postValue(PaymentState.Error("Respuesta vacia")) }
                 } else {
                     _paymentState.postValue(PaymentState.Error("Error al iniciar el pago: ${response.code()}"))
                 }
             } catch (e: Exception) {
-                _paymentState.postValue(PaymentState.Error("Error de conexión: ${e.message}"))
+                _paymentState.postValue(PaymentState.Error("Error de conexion: ${e.message}"))
             }
         }
     }
 
-    fun resetState() {
-        _paymentState.value = null
-    }
+    fun resetState() { _paymentState.value = null }
 }
 
 sealed class PaymentState {
@@ -405,7 +383,7 @@ sealed class PaymentState {
     data class Error(val message: String) : PaymentState()
 }
 
-// ─── PROFILE ─────────────────────────────────────────────────────────────────
+// --- PROFILE -----------------------------------------------------------------
 
 class ProfileViewModel : ViewModel() {
 
@@ -417,12 +395,44 @@ class ProfileViewModel : ViewModel() {
     private val _updateState = MutableLiveData<ProfileState>()
     val updateState: LiveData<ProfileState> = _updateState
 
+    private val _avatarUrl = MutableLiveData<String?>()
+    val avatarUrl: LiveData<String?> = _avatarUrl
+
     fun loadProfile() {
         viewModelScope.launch {
             try {
                 val response = api.getProfile(SessionManager.getToken())
-                if (response.isSuccessful) _profile.postValue(response.body())
+                if (response.isSuccessful) {
+                    val profile = response.body()
+                    _profile.postValue(profile)
+                    profile?.avatarUrl?.let { url ->
+                        if (url.isNotEmpty()) {
+                            SessionManager.saveAvatarUrl(url)
+                            _avatarUrl.postValue(url)
+                        }
+                    }
+                }
             } catch (e: Exception) { }
+        }
+    }
+
+    fun uploadAvatar(base64: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = api.uploadAvatar(
+                    SessionManager.getToken(),
+                    mapOf("imageBase64" to base64, "mimeType" to "image/jpeg")
+                )
+                if (response.isSuccessful) {
+                    val avatarUrl = response.body()?.get("avatar_url") as? String
+                    if (!avatarUrl.isNullOrEmpty()) {
+                        SessionManager.saveAvatarUrl(avatarUrl)
+                        _avatarUrl.postValue(avatarUrl)
+                        _profile.value?.let { _profile.postValue(it.copy(avatarUrl = avatarUrl)) }
+                    }
+                    onResult(true, avatarUrl)
+                } else onResult(false, null)
+            } catch (e: Exception) { onResult(false, null) }
         }
     }
 
@@ -430,20 +440,15 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = api.updateProfile(
-                    SessionManager.getToken(),
-                    UpdateProfileRequest(name, phone, address)
+                    SessionManager.getToken(), UpdateProfileRequest(name, phone, address)
                 )
                 if (response.isSuccessful) {
-                    response.body()?.let {
-                        SessionManager.updateProfile(it.name, it.phone ?: "", it.address ?: "")
-                    }
+                    response.body()?.let { SessionManager.updateProfile(it.name, it.phone ?: "", it.address ?: "") }
                     _updateState.postValue(ProfileState.Success("Perfil actualizado correctamente"))
                 } else {
                     _updateState.postValue(ProfileState.Error("Error al actualizar el perfil"))
                 }
-            } catch (e: Exception) {
-                _updateState.postValue(ProfileState.Error("Error de conexión"))
-            }
+            } catch (e: Exception) { _updateState.postValue(ProfileState.Error("Error de conexion")) }
         }
     }
 
@@ -451,22 +456,17 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = api.changePassword(
-                    SessionManager.getToken(),
-                    ChangePasswordRequest(currentPassword, newPassword)
+                    SessionManager.getToken(), ChangePasswordRequest(currentPassword, newPassword)
                 )
                 if (response.isSuccessful) {
-                    _updateState.postValue(ProfileState.Success("Contraseña cambiada correctamente"))
+                    _updateState.postValue(ProfileState.Success("Contrasena cambiada correctamente"))
                 } else {
                     val error = response.errorBody()?.string()
-                    val message = when {
-                        error?.contains("incorrecta") == true -> "Contraseña actual incorrecta"
-                        else -> "Error al cambiar la contraseña"
-                    }
+                    val message = if (error?.contains("incorrecta") == true) "Contrasena actual incorrecta"
+                    else "Error al cambiar la contrasena"
                     _updateState.postValue(ProfileState.Error(message))
                 }
-            } catch (e: Exception) {
-                _updateState.postValue(ProfileState.Error("Error de conexión"))
-            }
+            } catch (e: Exception) { _updateState.postValue(ProfileState.Error("Error de conexion")) }
         }
     }
 }

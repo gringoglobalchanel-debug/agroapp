@@ -31,11 +31,6 @@ class LoginActivity : AppCompatActivity() {
         setupViewModel()
     }
 
-    override fun onBackPressed() {
-        // En login, sí puede salir de la app
-        finishAffinity()
-    }
-
     private fun initViews() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
@@ -65,6 +60,8 @@ class LoginActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
 
+                    // ── CORRECCIÓN: primero chequeamos userType para driver,
+                    //    luego role para admin/vendedor, sino es cliente ──
                     when {
                         state.role == "admin" -> {
                             Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show()

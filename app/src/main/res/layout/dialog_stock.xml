@@ -3,70 +3,207 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@android:color/white">
 
-    <TextView
-        android:id="@+id/tvStockProductName"
+    <!-- Header verde -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Producto"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
+        android:orientation="vertical"
+        android:background="#2E7D32"
+        android:padding="20dp">
 
-    <TextView
-        android:id="@+id/tvCurrentStock"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Stock actual: 0"
-        android:textSize="14sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="16dp" />
-
-    <RadioGroup
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <RadioButton
-            android:id="@+id/radioAdd"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvStockProductName"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="➕ Agregar" />
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
 
-        <RadioButton
-            android:id="@+id/radioSubtract"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvCurrentStock"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="➖ Restar" />
+            android:textSize="13sp"
+            android:textColor="#A5D6A7"
+            android:layout_marginTop="4dp" />
 
-        <RadioButton
-            android:id="@+id/radioSet"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="✏️ Establecer"
-            android:checked="true" />
+    </LinearLayout>
 
-    </RadioGroup>
-
-    <EditText
-        android:id="@+id/etStockQuantity"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Cantidad"
-        android:inputType="numberDecimal"
-        android:layout_marginBottom="16dp" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <EditText
-        android:id="@+id/etStockNotes"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Notas (opcional)"
-        android:inputType="text"
-        android:minLines="2" />
+        <!-- Operacion -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Operaci\u00f3n"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#757575"
+            android:layout_marginBottom="10dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <!-- Agregar -->
+            <LinearLayout
+                android:id="@+id/layoutAdd"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="#E8F5E9"
+                android:layout_marginEnd="6dp">
+
+                <RadioButton
+                    android:id="@+id/radioAdd"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="&#43;"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#2E7D32" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Agregar"
+                    android:textSize="12sp"
+                    android:textColor="#2E7D32"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Restar -->
+            <LinearLayout
+                android:id="@+id/layoutSubtract"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="#FFF3E0"
+                android:layout_marginEnd="6dp">
+
+                <RadioButton
+                    android:id="@+id/radioSubtract"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="&#8722;"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#E65100" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Restar"
+                    android:textSize="12sp"
+                    android:textColor="#E65100"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Establecer -->
+            <LinearLayout
+                android:id="@+id/layoutSet"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="#E3F2FD">
+
+                <RadioButton
+                    android:id="@+id/radioSet"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="&#61;"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Establecer"
+                    android:textSize="12sp"
+                    android:textColor="#1565C0"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Cantidad -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cantidad"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#757575"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etStockQuantity"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="0"
+            android:inputType="numberDecimal"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#212121"
+            android:background="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Notas -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notas (opcional)"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#757575"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etStockNotes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ej: Reposici\u00f3n de inventario"
+            android:inputType="text"
+            android:minLines="2"
+            android:background="#F5F5F5"
+            android:padding="12dp" />
+
+    </LinearLayout>
 
 </LinearLayout>

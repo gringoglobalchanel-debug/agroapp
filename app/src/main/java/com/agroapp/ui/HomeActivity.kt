@@ -2,6 +2,8 @@
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -14,6 +16,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
@@ -37,6 +40,22 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var chipAdapter: ProductChipAdapter
     private lateinit var cardActiveOrder: CardView
+    private lateinit var viewPager: ViewPager2
+
+    private val autoScrollHandler = Handler(Looper.getMainLooper())
+    private var currentBannerPage = 0
+    private var bannerCount = 0
+    private val AUTO_SCROLL_DELAY = 3500L
+
+    private val autoScrollRunnable = object : Runnable {
+        override fun run() {
+            if (bannerCount > 0) {
+                currentBannerPage = (currentBannerPage + 1) % bannerCount
+                viewPager.setCurrentItem(currentBannerPage, true)
+                autoScrollHandler.postDelayed(this, AUTO_SCROLL_DELAY)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,18 +83,37 @@ class HomeActivity : AppCompatActivity() {
         super.onResume()
         if (SessionManager.isLoggedIn()) {
             checkActiveOrder()
+            if (bannerCount > 0) {
+                autoScrollHandler.removeCallbacks(autoScrollRunnable)
+                autoScrollHandler.postDelayed(autoScrollRunnable, AUTO_SCROLL_DELAY)
+            }
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        autoScrollHandler.removeCallbacks(autoScrollRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        autoScrollHandler.removeCallbacks(autoScrollRunnable)
+    }
+
     override fun onBackPressed() {
-        // Lleva la app al fondo sin cerrarla
-        moveTaskToBack(true)
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START, false)
+        } else {
+            moveTaskToBack(true)
+        }
+        super.onBackPressed()
     }
 
     private fun initViews() {
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
         cardActiveOrder = findViewById(R.id.cardActiveOrder)
+        viewPager = findViewById(R.id.viewPagerBanners)
 
         val headerView = navigationView.getHeaderView(0)
         val tvHeaderName = headerView.findViewById<MaterialTextView>(R.id.tvHeaderName)
@@ -126,13 +164,18 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        // ✅ Fix crash: verificar que el drawer no esté ya abierto antes de abrir
         toolbar.setNavigationOnClickListener {
-            drawerLayout.openDrawer(GravityCompat.START)
+            if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.openDrawer(GravityCompat.START, false)
+            }
         }
 
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_home -> drawerLayout.closeDrawer(GravityCompat.START)
+                R.id.nav_home -> { /* ya estamos aquí */ }
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
                 R.id.nav_orders -> startActivity(Intent(this, OrdersActivity::class.java))
                 R.id.nav_cart -> startActivity(Intent(this, CartActivity::class.java))
@@ -142,7 +185,7 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.nav_settings -> Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
             }
-            drawerLayout.closeDrawer(GravityCompat.START)
+            drawerLayout.closeDrawer(GravityCompat.START, false)
             true
         }
     }
@@ -260,38 +303,92 @@ class HomeActivity : AppCompatActivity() {
 
     private fun setupBannerCarousel() {
         val banners = listOf(
-            Banner(R.drawable.ic_delivery, "Primer pedido", "ENVÍO GRATIS"),
-            Banner(R.drawable.ic_yucas, "Yuca a 80 Centavos", "la libra"),
-            Banner(R.drawable.ic_frutaspromo, "LUNES DE FRUTAS", "15% DE DESCUENTO"),
-            Banner(R.drawable.ic_anuncio, "ANÚNCIATE AQUÍ", "Espacio publicitario")
+            Banner(
+                imageRes = R.drawable.banner_envio_gratis,
+                title = "🚚 Envío Gratis",
+                description = "En todos tus pedidos. ¡Compra ahora!",
+                destination = "mercado"
+            ),
+            Banner(
+                imageRes = R.drawable.banner_yappi,
+                title = "📱 Aceptamos YAPPI",
+                description = "Paga fácil y rápido con tu app favorita",
+                destination = "mercado"
+            ),
+            Banner(
+                imageRes = R.drawable.banner_comparte,
+                title = "❤️ Comparte Grün",
+                description = "Invita a tus amigos y familiares",
+                destination = "compartir"
+            )
         )
 
-        val viewPager = findViewById<ViewPager2>(R.id.viewPagerBanners)
-        viewPager.adapter = BannerAdapter(banners)
+        bannerCount = banners.size
+
+        viewPager.adapter = BannerAdapter(banners) { banner ->
+            handleBannerClick(banner)
+        }
 
         val layoutIndicator = findViewById<LinearLayout>(R.id.layoutIndicator)
-        val dots = arrayOfNulls<ImageView>(banners.size)
+        layoutIndicator.removeAllViews()
+
+        val dots = arrayOfNulls<View>(banners.size)
         for (i in dots.indices) {
-            dots[i] = ImageView(this).apply {
-                setImageResource(R.drawable.dot_inactive)
+            val dot = View(this).apply {
                 val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).also { it.setMargins(8, 0, 8, 0) }
-                layoutIndicator.addView(this, params)
+                    if (i == 0) 24.dpToPx() else 8.dpToPx(),
+                    8.dpToPx()
+                ).also { it.setMargins(4, 0, 4, 0) }
+                layoutParams = params
+                background = ContextCompat.getDrawable(
+                    this@HomeActivity,
+                    if (i == 0) R.drawable.dot_active else R.drawable.dot_inactive
+                )
             }
+            dots[i] = dot
+            layoutIndicator.addView(dot)
         }
-        dots[0]?.setImageResource(R.drawable.dot_active)
 
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
+                currentBannerPage = position
                 dots.forEachIndexed { i, dot ->
-                    dot?.setImageResource(
-                        if (i == position) R.drawable.dot_active else R.drawable.dot_inactive
+                    val isActive = i == position
+                    dot?.layoutParams = (dot?.layoutParams as? LinearLayout.LayoutParams)?.also {
+                        it.width = if (isActive) 24.dpToPx() else 8.dpToPx()
+                    }
+                    dot?.background = ContextCompat.getDrawable(
+                        this@HomeActivity,
+                        if (isActive) R.drawable.dot_active else R.drawable.dot_inactive
                     )
                 }
             }
+
+            override fun onPageScrollStateChanged(state: Int) {
+                if (state == ViewPager2.SCROLL_STATE_DRAGGING) {
+                    autoScrollHandler.removeCallbacks(autoScrollRunnable)
+                } else if (state == ViewPager2.SCROLL_STATE_IDLE) {
+                    autoScrollHandler.removeCallbacks(autoScrollRunnable)
+                    autoScrollHandler.postDelayed(autoScrollRunnable, AUTO_SCROLL_DELAY)
+                }
+            }
         })
+
+        autoScrollHandler.postDelayed(autoScrollRunnable, AUTO_SCROLL_DELAY)
+    }
+
+    private fun handleBannerClick(banner: Banner) {
+        when (banner.destination) {
+            "mercado" -> startActivity(Intent(this, ProductsActivity::class.java))
+            "compartir" -> {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "¡Descarga Grün y recibe tus productos frescos! Link próximamente disponible.")
+                }
+                startActivity(Intent.createChooser(shareIntent, "Compartir Grün"))
+            }
+            else -> {}
+        }
     }
 
     private fun setupFooter() {
@@ -318,4 +415,7 @@ class HomeActivity : AppCompatActivity() {
         )
         finish()
     }
+
+    private fun Int.dpToPx(): Int =
+        (this * resources.displayMetrics.density).toInt()
 }

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="5dp"
+    app:cardBackgroundColor="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- HEADER -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="12dp"
+            android:background="#F1F8E9">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvAdminOrderId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textColor="#1B5E20"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tvAdminOrderCustomer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#558B2F"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvAdminOrderStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- BODY -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="14dp">
+
+            <!-- Ventana de entrega -->
+            <TextView
+                android:id="@+id/tvAdminOrderWindow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#1565C0"
+                android:background="#E3F2FD"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="7dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Zona -->
+            <TextView
+                android:id="@+id/tvAdminOrderZone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#6A1B9A"
+                android:background="#F3E5F5"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Direccion -->
+            <TextView
+                android:id="@+id/tvAdminOrderAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#546E7A"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E8F5E9"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="\uD83D\uDED2  Productos"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#9E9E9E"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tvAdminOrderProducts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#37474F"
+                android:lineSpacingExtra="5dp"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E8F5E9"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvAdminOrderTotal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="#455A64"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Botón asignar driver -->
+            <Button
+                android:id="@+id/btnAssignDriver"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="\uD83D\uDE9A  Asignar a driver"
+                android:textSize="13sp"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#1565C0"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
