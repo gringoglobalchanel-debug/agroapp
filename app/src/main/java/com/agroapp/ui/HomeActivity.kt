@@ -30,6 +30,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.agroapp.R
 import com.agroapp.model.ActiveOrderResponse
 import com.agroapp.model.Banner
+import com.agroapp.network.AppBanner
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.ProductViewModel
@@ -51,6 +52,9 @@ class HomeActivity : AppCompatActivity() {
     private var currentBannerPage = 0
     private var bannerCount = 0
     private val AUTO_SCROLL_DELAY = 3500L
+
+    // ✅ Guardamos los banners cargados para manejar clicks
+    private var loadedBanners: List<AppBanner> = emptyList()
 
     private val autoScrollRunnable = object : Runnable {
         override fun run() {
@@ -89,7 +93,7 @@ class HomeActivity : AppCompatActivity() {
         setupBannerCarousel()
         setupFooter()
         checkActiveOrder()
-        loadStaticBanners() // ✅ NUEVO
+        loadStaticBanners()
     }
 
     private fun requestNotificationPermission() {
@@ -101,29 +105,35 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ NUEVO: carga las imágenes de los 3 banners estáticos desde el backend
+    // ✅ Carga banners desde backend y configura clicks
     private fun loadStaticBanners() {
         val ivBanner1 = findViewById<ImageView>(R.id.ivBanner1)
         val ivBanner2 = findViewById<ImageView>(R.id.ivBanner2)
         val ivBanner3 = findViewById<ImageView>(R.id.ivBanner3)
+        val cardBanner1 = findViewById<CardView>(R.id.cardBanner1)
+        val cardBanner2 = findViewById<CardView>(R.id.cardBanner2)
+        val cardBanner3 = findViewById<CardView>(R.id.cardBanner3)
 
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.instance.getBanners()
                 if (response.isSuccessful) {
                     val banners = response.body() ?: return@launch
+                    loadedBanners = banners
+
                     banners.forEach { banner ->
-                        val imageUrl = banner.imageUrl ?: return@forEach
-                        val iv = when (banner.slot) {
-                            1 -> ivBanner1
-                            2 -> ivBanner2
-                            3 -> ivBanner3
-                            else -> null
-                        } ?: return@forEach
-                        Glide.with(this@HomeActivity)
-                            .load(imageUrl)
-                            .centerCrop()
-                            .into(iv)
+                        val iv = when (banner.slot) { 1 -> ivBanner1; 2 -> ivBanner2; 3 -> ivBanner3; else -> null } ?: return@forEach
+                        val card = when (banner.slot) { 1 -> cardBanner1; 2 -> cardBanner2; 3 -> cardBanner3; else -> null } ?: return@forEach
+
+                        // Cargar imagen
+                        if (!banner.imageUrl.isNullOrEmpty()) {
+                            Glide.with(this@HomeActivity).load(banner.imageUrl).centerCrop().into(iv)
+                        }
+
+                        // ✅ Configurar click — navega al producto si tiene product_id
+                        card.setOnClickListener {
+                            handleBannerCardClick(banner)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -132,11 +142,38 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ Click en banner — navega a ProductsActivity con el producto preseleccionado
+    private fun handleBannerCardClick(banner: AppBanner) {
+        when {
+            banner.productId != null && banner.productId > 0 -> {
+                // Navega a productos con el ID del producto para buscarlo
+                startActivity(
+                    Intent(this, ProductsActivity::class.java).apply {
+                        putExtra("PRODUCT_ID", banner.productId)
+                        putExtra("SEARCH_QUERY", banner.title ?: "")
+                    }
+                )
+            }
+            !banner.linkUrl.isNullOrEmpty() -> {
+                // Si tiene URL externa, abre en navegador
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(banner.linkUrl)))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "No se pudo abrir el enlace", Toast.LENGTH_SHORT).show()
+                }
+            }
+            else -> {
+                // Sin link — va al mercado general
+                startActivity(Intent(this, ProductsActivity::class.java))
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         if (SessionManager.isLoggedIn()) {
             checkActiveOrder()
-            loadStaticBanners() // ✅ refresca al volver
+            loadStaticBanners()
             if (bannerCount > 0) {
                 autoScrollHandler.removeCallbacks(autoScrollRunnable)
                 autoScrollHandler.postDelayed(autoScrollRunnable, AUTO_SCROLL_DELAY)
@@ -248,8 +285,7 @@ class HomeActivity : AppCompatActivity() {
         viewModel.loadProducts()
         viewModel.products.observe(this) { products ->
             if (!products.isNullOrEmpty()) {
-                val productNames = products.map { it.name }
-                searchView.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, productNames))
+                searchView.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, products.map { it.name }))
             }
         }
         searchView.setOnItemClickListener { _, _, _, _ ->

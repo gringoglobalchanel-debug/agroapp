@@ -210,5 +210,8 @@ data class AppBanner(
     val slot: Int,
     val title: String?,
     @SerializedName("image_url") val imageUrl: String?,
-    @SerializedName("is_active") val isActive: Boolean = true
+    @SerializedName("is_active") val isActive: Boolean = true,
+    val price: Double? = null,
+    @SerializedName("product_id") val productId: Int? = null,
+    @SerializedName("link_url") val linkUrl: String? = null
 )

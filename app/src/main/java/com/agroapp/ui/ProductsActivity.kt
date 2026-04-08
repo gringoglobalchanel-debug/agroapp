@@ -26,6 +26,7 @@ class ProductsActivity : AppCompatActivity() {
     private lateinit var adapter: ProductAdapter
     private var selectedCategory: String? = null
     private var searchQuery: String? = null
+    private var productId: Int? = null // ✅ NUEVO
     private var allProducts: List<Product> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +35,7 @@ class ProductsActivity : AppCompatActivity() {
 
         selectedCategory = intent.getStringExtra("CATEGORY")
         searchQuery = intent.getStringExtra("SEARCH_QUERY")
+        productId = intent.getIntExtra("PRODUCT_ID", -1).takeIf { it > 0 } // ✅ NUEVO
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         val rvProducts = findViewById<RecyclerView>(R.id.rvProducts)
@@ -57,8 +59,6 @@ class ProductsActivity : AppCompatActivity() {
             searchInput.setText(searchQuery)
         }
 
-        // TEMPORAL: canOrder = true para pruebas fuera de horario
-        // Cambiar a: val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY); val canOrder = hour in 8..12
         val canOrder = true
 
         if (!canOrder) {
@@ -72,14 +72,11 @@ class ProductsActivity : AppCompatActivity() {
             products = emptyList(),
             cartMap = emptyMap(),
             canOrder = canOrder,
-            onAdd = { product, quantity ->
-                viewModel.addToCart(product, quantity)
-            }
+            onAdd = { product, quantity -> viewModel.addToCart(product, quantity) }
         )
         rvProducts.layoutManager = LinearLayoutManager(this)
         rvProducts.adapter = adapter
 
-        // Búsqueda predictiva en tiempo real
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -95,7 +92,6 @@ class ProductsActivity : AppCompatActivity() {
             searchInput.clearFocus()
         }
 
-        // Observar productos
         viewModel.products.observe(this) { products ->
             progressBar.visibility = View.GONE
             if (products.isNullOrEmpty()) return@observe
@@ -103,24 +99,26 @@ class ProductsActivity : AppCompatActivity() {
             allProducts = products
 
             val productNames = products.map { it.name }
-            val autoAdapter = ArrayAdapter(
-                this,
-                android.R.layout.simple_dropdown_item_1line,
-                productNames
-            )
-            searchInput.setAdapter(autoAdapter)
+            searchInput.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, productNames))
 
             val currentQuery = searchInput.text?.toString()?.trim() ?: ""
             filterProducts(currentQuery, tvResultCount)
+
+            // ✅ NUEVO: si viene de un banner con product_id, hace scroll al producto
+            productId?.let { targetId ->
+                val index = allProducts.indexOfFirst { it.id == targetId }
+                if (index >= 0) {
+                    rvProducts.post {
+                        (rvProducts.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(index, 0)
+                    }
+                }
+            }
         }
 
-        // Observar carrito → actualizar barra flotante en tiempo real
         viewModel.cart.observe(this) { cart ->
             adapter.updateCart(cart ?: emptyMap())
-
             val itemCount = cart?.size ?: 0
             val total = cart?.entries?.sumOf { it.key.price * it.value } ?: 0.0
-
             if (itemCount > 0) {
                 cartBar.visibility = View.VISIBLE
                 tvCartItemCount.text = "$itemCount item${if (itemCount != 1) "s" else ""}"
@@ -130,12 +128,8 @@ class ProductsActivity : AppCompatActivity() {
             }
         }
 
-        // Al tocar la barra del carrito → abrir CartActivity
-        cartBar.setOnClickListener {
-            startActivity(Intent(this, CartActivity::class.java))
-        }
+        cartBar.setOnClickListener { startActivity(Intent(this, CartActivity::class.java)) }
 
-        // Observar carga
         viewModel.loading.observe(this) { isLoading ->
             progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
