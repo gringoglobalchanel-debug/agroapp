@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027691268419",
+    "project_id": "agroapp-e0dc8",
+    "storage_bucket": "agroapp-e0dc8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027691268419:android:eefaf7a6ebc3aef92dc7f6",
+        "android_client_info": {
+          "package_name": "com.agroapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBq6sZ-FQX4KfOB7KUwgw5cFqSt1N0ObE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

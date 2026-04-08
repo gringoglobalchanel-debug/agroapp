@@ -15,7 +15,7 @@
         android:name=".AgroApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="GrÃ¼n"
+        android:label="Grün"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
@@ -26,7 +26,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCQ87ZimfFtzExy8xWUsx0zmasOjC4BgUQ" />
 
-        <!-- âœ… SPLASH â€” nueva pantalla de entrada -->
+        <!-- ✅ SPLASH — nueva pantalla de entrada -->
         <activity
             android:name=".ui.SplashActivity"
             android:exported="true"
@@ -37,7 +37,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Login ya NO es el launcher -->
         <activity
             android:name=".ui.LoginActivity" android:theme="@style/Theme.Agroapp.Dark"
             android:exported="false" />
@@ -55,11 +54,20 @@
         <activity android:name=".ui.OrderTrackingActivity" android:exported="false"/>
         <activity android:name=".ui.AdminActivity" android:exported="false" />
 
-        <!-- Servicio de ubicaciÃ³n para driver -->
+        <!-- Servicio de ubicación para driver -->
         <service
             android:name=".service.DriverLocationService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <!-- ✅ NUEVO: Servicio FCM para notificaciones push -->
+        <service
+            android:name=".service.AgroFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- FileProvider para fotos de entrega -->
         <provider
@@ -75,4 +83,3 @@
     </application>
 
 </manifest>
-

@@ -154,12 +154,18 @@ interface ApiService {
     @POST("admin/orders/{orderId}/assign-driver")
     suspend fun assignDriverToOrder(@Header("Authorization") token: String, @Path("orderId") orderId: String, @Body body: com.agroapp.model.AssignDriverRequest): Response<MessageResponse>
 
-    // ✅ NUEVO: obtener avatar de cualquier usuario (driver ve cliente)
     @GET("users/{userId}/avatar")
     suspend fun getUserAvatar(
         @Header("Authorization") token: String,
         @Path("userId") userId: String
     ): Response<UserAvatarResponse>
+
+    // ✅ NUEVO: registrar token FCM del dispositivo
+    @POST("auth/fcm-token")
+    suspend fun registerFcmToken(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): Response<MessageResponse>
 }
 
 data class DriverLocationRequest(val orderId: String, val latitude: Double, val longitude: Double)
@@ -180,7 +186,6 @@ data class YappiPendingOrder(
 
 data class RejectYappiRequest(val reason: String)
 
-// ✅ NUEVO: respuesta del endpoint GET /users/:userId/avatar
 data class UserAvatarResponse(
     @SerializedName("avatar_url") val avatarUrl: String?,
     @SerializedName("full_name") val fullName: String?

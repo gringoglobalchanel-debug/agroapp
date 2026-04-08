@@ -9,8 +9,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.agroapp.R
+import com.agroapp.network.RetrofitClient
+import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.AuthState
 import com.agroapp.viewmodel.AuthViewModel
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -60,8 +66,9 @@ class LoginActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
 
-                    // ── CORRECCIÓN: primero chequeamos userType para driver,
-                    //    luego role para admin/vendedor, sino es cliente ──
+                    // ✅ NUEVO: registrar token FCM tras login exitoso
+                    registerFcmToken()
+
                     when {
                         state.role == "admin" -> {
                             Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show()
@@ -94,6 +101,22 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    // ✅ NUEVO: obtiene el token FCM y lo envía al backend
+    private fun registerFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    RetrofitClient.instance.registerFcmToken(
+                        token = SessionManager.getToken(),
+                        body = mapOf("fcm_token" to fcmToken)
+                    )
+                } catch (e: Exception) {
+                    // Si falla no bloqueamos el login
+                }
+            }
+        }
     }
 
     private fun performLogin() {

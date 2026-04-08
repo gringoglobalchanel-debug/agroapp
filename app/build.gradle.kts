@@ -3,9 +3,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
-// ✅ Leer local.properties
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -25,17 +25,10 @@ android {
 
         manifestPlaceholders["google_maps_key"] = "AIzaSyCQ87ZimfFtzExy8xWUsx0zmasOjC4BgUQ"
 
-        // ✅ Exponer Stripe key como BuildConfig field
-        buildConfigField(
-            "String",
-            "STRIPE_SECRET_KEY",
-            "\"${localProperties.getProperty("STRIPE_SECRET_KEY", "")}\""
-                    buildConfigField(
-                    "String",
-            "STRIPE_PUBLISHABLE_KEY",
-            "\"${localProperties.getProperty("STRIPE_PUBLISHABLE_KEY", "")}\""
-        )
-        )
+        val stripeSecret = localProperties.getProperty("STRIPE_SECRET_KEY", "")
+        val stripePublishable = localProperties.getProperty("STRIPE_PUBLISHABLE_KEY", "")
+        buildConfigField("String", "STRIPE_SECRET_KEY", "\"" + stripeSecret + "\"")
+        buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"" + stripePublishable + "\"")
     }
 
     buildTypes {
@@ -61,7 +54,7 @@ android {
     buildFeatures {
         viewBinding = false
         dataBinding = false
-        buildConfig = true  // ✅ Habilitar BuildConfig
+        buildConfig = true
     }
 }
 
@@ -90,6 +83,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    // ✅ Firebase FCM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
