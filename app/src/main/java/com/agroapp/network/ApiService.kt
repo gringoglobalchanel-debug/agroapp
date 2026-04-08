@@ -160,10 +160,23 @@ interface ApiService {
         @Path("userId") userId: String
     ): Response<UserAvatarResponse>
 
-    // ✅ NUEVO: registrar token FCM del dispositivo
     @POST("auth/fcm-token")
     suspend fun registerFcmToken(
         @Header("Authorization") token: String,
+        @Body body: Map<String, String>
+    ): Response<MessageResponse>
+
+    // ✅ NUEVO: banners
+    @GET("banners")
+    suspend fun getBanners(): Response<List<AppBanner>>
+
+    @GET("admin/banners")
+    suspend fun getAdminBanners(@Header("Authorization") token: String): Response<List<AppBanner>>
+
+    @PATCH("admin/banners/{id}")
+    suspend fun updateBanner(
+        @Header("Authorization") token: String,
+        @Path("id") bannerId: Int,
         @Body body: Map<String, String>
     ): Response<MessageResponse>
 }
@@ -189,4 +202,13 @@ data class RejectYappiRequest(val reason: String)
 data class UserAvatarResponse(
     @SerializedName("avatar_url") val avatarUrl: String?,
     @SerializedName("full_name") val fullName: String?
+)
+
+// ✅ NUEVO: modelo de banner
+data class AppBanner(
+    val id: Int,
+    val slot: Int,
+    val title: String?,
+    @SerializedName("image_url") val imageUrl: String?,
+    @SerializedName("is_active") val isActive: Boolean = true
 )

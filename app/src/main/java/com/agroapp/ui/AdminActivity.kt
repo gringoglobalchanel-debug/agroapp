@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroapp.R
 import com.agroapp.model.*
+import com.agroapp.network.AppBanner
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import com.agroapp.network.YappiPendingOrder
@@ -67,10 +68,21 @@ class AdminActivity : AppCompatActivity() {
     private var currentImagePreview: ImageView? = null
     private var currentImageStatus: TextView? = null
 
+    // ✅ Para banners
+    private var currentBannerGalleryCallback: ((ByteArray, String) -> Unit)? = null
+
     private val SUPABASE_URL = "https://eaozzabxruvqcrayejfk.supabase.co"
     private val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhb3p6YWJ4cnV2cWNyYXllamZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMDg3MDcsImV4cCI6MjA4ODY4NDcwN30.fSxW1KtUAUfqv1vTdBOZsSbEXiF2DMPr1ENf9v022iM"
 
-    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? -> uri?.let { processProductImage(it) } }
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            if (currentBannerGalleryCallback != null) {
+                processBannerImage(it)
+            } else {
+                processProductImage(it)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,7 +111,6 @@ class AdminActivity : AppCompatActivity() {
         )
         paymentsAdapter = PaymentsAdminAdapter { showProcessPaymentDialog(it) }
         yappiAdapter = YappiPendingAdapter(onApprove = { showApproveYappiDialog(it) }, onReject = { showRejectYappiDialog(it) })
-        // ✅ Con callback para asignar driver manualmente
         pendingOrdersAdapter = AdminPendingOrdersAdapter(onAssignDriver = { order -> showAssignDriverDialog(order) })
     }
 
@@ -110,6 +121,7 @@ class AdminActivity : AppCompatActivity() {
         tabLayout.addTab(tabLayout.newTab().setText("YAPPI"))
         tabLayout.addTab(tabLayout.newTab().setText("Pedidos"))
         tabLayout.addTab(tabLayout.newTab().setText("Logs"))
+        tabLayout.addTab(tabLayout.newTab().setText("Banners")) // ✅ NUEVO
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -120,6 +132,7 @@ class AdminActivity : AppCompatActivity() {
                     3 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = yappiAdapter; loadYappiPendingOrders() }
                     4 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = pendingOrdersAdapter; loadAdminPendingOrders() }
                     5 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; viewModel.loadInventoryLogs() }
+                    6 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; loadAndShowBanners() } // ✅ NUEVO
                 }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -134,7 +147,164 @@ class AdminActivity : AppCompatActivity() {
         })
     }
 
-    // ==================== IMAGEN ====================
+    // ==================== BANNERS ====================
+
+    private fun loadAndShowBanners() {
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.instance.getAdminBanners(SessionManager.getToken())
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    if (response.isSuccessful) {
+                        val banners = response.body() ?: emptyList()
+                        showBannersUI(banners)
+                    } else {
+                        Toast.makeText(this@AdminActivity, "Error cargando banners", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun showBannersUI(banners: List<AppBanner>) {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 32)
+        }
+
+        banners.forEach { banner ->
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 24)
+            }
+
+            val title = TextView(this).apply {
+                text = "Banner ${banner.slot} — ${banner.title ?: "Sin título"}"
+                textSize = 14f
+                setTextColor(android.graphics.Color.parseColor("#2E7D32"))
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                setPadding(0, 0, 0, 8)
+            }
+
+            val ivPreview = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 300
+                )
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setBackgroundColor(android.graphics.Color.parseColor("#F5F5F5"))
+            }
+
+            if (!banner.imageUrl.isNullOrEmpty()) {
+                Glide.with(this).load(banner.imageUrl).centerCrop().into(ivPreview)
+            }
+
+            val btnChange = Button(this).apply {
+                text = "📷 Cambiar imagen"
+                setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
+                setTextColor(android.graphics.Color.WHITE)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = 8 }
+            }
+
+            btnChange.setOnClickListener {
+                currentBannerGalleryCallback = { imageBytes, _ ->
+                    uploadBannerImage(banner.id, imageBytes, ivPreview)
+                    currentBannerGalleryCallback = null
+                }
+                galleryLauncher.launch("image/*")
+            }
+
+            card.addView(title)
+            card.addView(ivPreview)
+            card.addView(btnChange)
+
+            val divider = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 1
+                ).apply { topMargin = 16; bottomMargin = 16 }
+                setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
+            }
+            card.addView(divider)
+            container.addView(card)
+        }
+
+        val scrollView = ScrollView(this).apply {
+            addView(container)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val parent = recyclerView.parent as? android.view.ViewGroup ?: return
+        scrollView.id = View.generateViewId()
+
+        // Eliminar scroll anterior de banners si existe
+        parent.findViewWithTag<View>("banners_scroll")?.let { parent.removeView(it) }
+        scrollView.tag = "banners_scroll"
+        parent.addView(scrollView)
+        scrollView.visibility = View.VISIBLE
+        recyclerView.visibility = View.GONE
+    }
+
+    private fun processBannerImage(uri: Uri) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val inputStream = contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream); inputStream?.close()
+                val resized = resizeBitmap(bitmap, 1200)
+                val outputStream = ByteArrayOutputStream()
+                resized.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                val imageBytes = outputStream.toByteArray()
+                withContext(Dispatchers.Main) {
+                    currentBannerGalleryCallback?.invoke(imageBytes, "image/jpeg")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@AdminActivity, "Error al leer imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun uploadBannerImage(bannerId: Int, imageBytes: ByteArray, ivPreview: ImageView) {
+        progressBar.visibility = View.VISIBLE
+        val base64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.instance.updateBanner(
+                    token = SessionManager.getToken(),
+                    bannerId = bannerId,
+                    body = mapOf("imageBase64" to base64, "mimeType" to "image/jpeg")
+                )
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@AdminActivity, "✅ Banner actualizado", Toast.LENGTH_SHORT).show()
+                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                        Glide.with(this@AdminActivity).load(bitmap).centerCrop().into(ivPreview)
+                    } else {
+                        Toast.makeText(this@AdminActivity, "Error al actualizar banner", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // ==================== IMAGEN PRODUCTOS ====================
 
     private fun processProductImage(uri: Uri) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -148,12 +318,12 @@ class AdminActivity : AppCompatActivity() {
                 selectedImageBase64 = Base64.encodeToString(selectedImageBytes, Base64.NO_WRAP)
                 withContext(Dispatchers.Main) {
                     currentImagePreview?.let { Glide.with(this@AdminActivity).load(bitmap).centerCrop().into(it) }
-                    currentImageStatus?.text = "\u2705 Imagen seleccionada"
+                    currentImageStatus?.text = "✅ Imagen seleccionada"
                     currentImageStatus?.setTextColor(android.graphics.Color.parseColor("#2E7D32"))
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    currentImageStatus?.text = "\u274C Error al cargar imagen"
+                    currentImageStatus?.text = "❌ Error al cargar imagen"
                     Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -220,64 +390,41 @@ class AdminActivity : AppCompatActivity() {
 
     private fun showAssignDriverDialog(order: AdminPendingOrder) {
         val drivers = viewModel.drivers.value
-        if (drivers.isNullOrEmpty()) {
-            Toast.makeText(this, "No hay drivers disponibles", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+        if (drivers.isNullOrEmpty()) { Toast.makeText(this, "No hay drivers disponibles", Toast.LENGTH_SHORT).show(); return }
         val driverNames = drivers.map { "${it.fullName} (${it.email})" }.toTypedArray()
         var selectedIndex = 0
-
         AlertDialog.Builder(this)
-            .setTitle("\uD83D\uDE9A Asignar driver")
+            .setTitle("🚚 Asignar driver")
             .setMessage("Pedido #${order.id.take(8).uppercase()}\nCliente: ${order.customerName}")
             .setSingleChoiceItems(driverNames, 0) { _, which -> selectedIndex = which }
-            .setPositiveButton("Asignar") { _, _ ->
-                val driver = drivers[selectedIndex]
-                assignDriverToOrder(order, driver)
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
+            .setPositiveButton("Asignar") { _, _ -> assignDriverToOrder(order, drivers[selectedIndex]) }
+            .setNegativeButton("Cancelar", null).show()
     }
 
     private fun assignDriverToOrder(order: AdminPendingOrder, driver: User) {
         progressBar.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = RetrofitClient.instance.assignDriverToOrder(
-                    SessionManager.getToken(),
-                    order.id,
-                    AssignDriverRequest(driverId = driver.id)
-                )
+                val response = RetrofitClient.instance.assignDriverToOrder(SessionManager.getToken(), order.id, AssignDriverRequest(driverId = driver.id))
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
-                    if (response.isSuccessful) {
-                        Toast.makeText(this@AdminActivity, "\u2705 Pedido asignado a ${driver.fullName}", Toast.LENGTH_LONG).show()
-                        loadAdminPendingOrders()
-                    } else {
-                        val error = response.errorBody()?.string() ?: "Error desconocido"
-                        Toast.makeText(this@AdminActivity, "Error: $error", Toast.LENGTH_LONG).show()
-                    }
+                    if (response.isSuccessful) { Toast.makeText(this@AdminActivity, "✅ Pedido asignado a ${driver.fullName}", Toast.LENGTH_LONG).show(); loadAdminPendingOrders() }
+                    else Toast.makeText(this@AdminActivity, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_LONG).show()
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    progressBar.visibility = View.GONE
-                    Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+            } catch (e: Exception) { withContext(Dispatchers.Main) { progressBar.visibility = View.GONE; Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }
     }
 
     private fun showApproveYappiDialog(order: YappiPendingOrder) {
-        AlertDialog.Builder(this).setTitle("\u2705 Aprobar pago YAPPI")
-            .setMessage("Cliente: ${order.customer_name}\nMonto: ${formatter.format(order.total_amount)}\nReferencia: ${order.reference_code}\n\n\u00bfConfirmas que recibiste este pago?")
-            .setPositiveButton("S\u00ed, aprobar") { _, _ -> approveYappiPayment(order) }
+        AlertDialog.Builder(this).setTitle("✅ Aprobar pago YAPPI")
+            .setMessage("Cliente: ${order.customer_name}\nMonto: ${formatter.format(order.total_amount)}\nReferencia: ${order.reference_code}\n\n¿Confirmas que recibiste este pago?")
+            .setPositiveButton("Sí, aprobar") { _, _ -> approveYappiPayment(order) }
             .setNegativeButton("Cancelar", null).show()
     }
 
     private fun showRejectYappiDialog(order: YappiPendingOrder) {
         val input = EditText(this).apply { hint = "Motivo del rechazo (opcional)"; setPadding(48, 32, 48, 32) }
-        AlertDialog.Builder(this).setTitle("\u274C Rechazar pago YAPPI")
+        AlertDialog.Builder(this).setTitle("❌ Rechazar pago YAPPI")
             .setMessage("Cliente: ${order.customer_name}\nMonto: ${formatter.format(order.total_amount)}\nRef: ${order.reference_code}")
             .setView(input).setPositiveButton("Rechazar") { _, _ -> rejectYappiPayment(order, input.text.toString().trim()) }
             .setNegativeButton("Cancelar", null).show()
@@ -290,7 +437,7 @@ class AdminActivity : AppCompatActivity() {
                 val response = RetrofitClient.instance.approveYappiPayment(SessionManager.getToken(), order.id)
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
-                    if (response.isSuccessful) { Toast.makeText(this@AdminActivity, "\u2705 Pago aprobado", Toast.LENGTH_LONG).show(); loadYappiPendingOrders() }
+                    if (response.isSuccessful) { Toast.makeText(this@AdminActivity, "✅ Pago aprobado", Toast.LENGTH_LONG).show(); loadYappiPendingOrders() }
                     else Toast.makeText(this@AdminActivity, "Error al aprobar", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) { withContext(Dispatchers.Main) { progressBar.visibility = View.GONE } }
@@ -304,7 +451,7 @@ class AdminActivity : AppCompatActivity() {
                 val response = RetrofitClient.instance.rejectYappiPayment(SessionManager.getToken(), order.id, com.agroapp.network.RejectYappiRequest(reason.ifEmpty { "Pago no verificado" }))
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
-                    if (response.isSuccessful) { Toast.makeText(this@AdminActivity, "\u274C Pago rechazado", Toast.LENGTH_LONG).show(); loadYappiPendingOrders() }
+                    if (response.isSuccessful) { Toast.makeText(this@AdminActivity, "❌ Pago rechazado", Toast.LENGTH_LONG).show(); loadYappiPendingOrders() }
                     else Toast.makeText(this@AdminActivity, "Error al rechazar", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) { withContext(Dispatchers.Main) { progressBar.visibility = View.GONE } }
@@ -318,18 +465,18 @@ class AdminActivity : AppCompatActivity() {
         viewModel.message.observe(this, Observer { it?.let { msg -> Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); viewModel.clearMessage() } })
         viewModel.dashboardStats.observe(this, Observer { stats ->
             if (stats != null) tvStats.text = buildString {
-                appendLine("\uD83D\uDCCA DASHBOARD"); appendLine()
-                appendLine("\uD83D\uDCE6 Productos totales: ${stats.totalProducts}")
-                appendLine("\u26A0\uFE0F Stock bajo: ${stats.lowStockProducts}")
-                appendLine("\uD83D\uDEAB Agotados: ${stats.outOfStockProducts}"); appendLine()
-                appendLine("\uD83D\uDCC5 Pedidos hoy: ${stats.totalOrdersToday}")
-                appendLine("\uD83D\uDCB0 Ventas hoy: ${formatter.format(stats.totalRevenueToday)}"); appendLine()
-                appendLine("\uD83D\uDCC6 Pedidos semana: ${stats.totalOrdersWeek}")
-                appendLine("\uD83D\uDCB5 Ventas semana: ${formatter.format(stats.totalRevenueWeek)}"); appendLine()
-                appendLine("\uD83D\uDC65 Repartidores: ${stats.totalDrivers}")
-                appendLine("\uD83D\uDE9A Activos: ${stats.activeDrivers}")
-                appendLine("\uD83D\uDCB8 Pagos pendientes: ${formatter.format(stats.pendingPayments)}"); appendLine()
-                if ((stats.pendingYappiApprovals ?: 0) > 0) appendLine("\u26A0\uFE0F YAPPI por aprobar: ${stats.pendingYappiApprovals}")
+                appendLine("📊 DASHBOARD"); appendLine()
+                appendLine("📦 Productos totales: ${stats.totalProducts}")
+                appendLine("⚠️ Stock bajo: ${stats.lowStockProducts}")
+                appendLine("🚫 Agotados: ${stats.outOfStockProducts}"); appendLine()
+                appendLine("📅 Pedidos hoy: ${stats.totalOrdersToday}")
+                appendLine("💰 Ventas hoy: ${formatter.format(stats.totalRevenueToday)}"); appendLine()
+                appendLine("📆 Pedidos semana: ${stats.totalOrdersWeek}")
+                appendLine("💵 Ventas semana: ${formatter.format(stats.totalRevenueWeek)}"); appendLine()
+                appendLine("👥 Repartidores: ${stats.totalDrivers}")
+                appendLine("🚚 Activos: ${stats.activeDrivers}")
+                appendLine("💸 Pagos pendientes: ${formatter.format(stats.pendingPayments)}"); appendLine()
+                if ((stats.pendingYappiApprovals ?: 0) > 0) appendLine("⚠️ YAPPI por aprobar: ${stats.pendingYappiApprovals}")
             }
         })
         viewModel.products.observe(this, Observer { productsAdapter.submitList(it ?: emptyList()) })
@@ -354,6 +501,7 @@ class AdminActivity : AppCompatActivity() {
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivProductImagePreview)
         val tvImageStatus = dialogView.findViewById<TextView>(R.id.tvImageStatus)
         currentImagePreview = ivPreview; currentImageStatus = tvImageStatus
+        currentBannerGalleryCallback = null
         btnPickImage.setOnClickListener { galleryLauncher.launch("image/*") }
         viewModel.categories.observe(this, Observer { categories ->
             spinnerCategory.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories?.map { it.name } ?: emptyList()).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
@@ -389,6 +537,7 @@ class AdminActivity : AppCompatActivity() {
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivProductImagePreview)
         val tvImageStatus = dialogView.findViewById<TextView>(R.id.tvImageStatus)
         currentImagePreview = ivPreview; currentImageStatus = tvImageStatus
+        currentBannerGalleryCallback = null
         etName.setText(product.name); etDescription.setText(product.description ?: "")
         etPrice.setText(product.price.toString()); etUnit.setText(product.unit)
         etStock.setText((product.stock ?: 0.0).toString()); etMinStock.setText((product.minStock ?: 0.0).toString())
@@ -435,13 +584,18 @@ class AdminActivity : AppCompatActivity() {
     }
 
     private fun showDeleteConfirmDialog(product: ProductWithInventory) {
-        AlertDialog.Builder(this).setTitle("Eliminar Producto").setMessage("\u00bfEst\u00e1s seguro de eliminar ${product.name}?")
+        AlertDialog.Builder(this).setTitle("Eliminar Producto").setMessage("¿Estás seguro de eliminar ${product.name}?")
             .setPositiveButton("Eliminar") { _, _ -> viewModel.deleteProduct(product.id) }.setNegativeButton("Cancelar", null).show()
     }
 
     private fun showProcessPaymentDialog(payment: DriverPayment) {
         AlertDialog.Builder(this).setTitle("Procesar Pago")
-            .setMessage(buildString { appendLine("Conductor: ${payment.driverName}"); appendLine("Semana: ${payment.weekStart} - ${payment.weekEnd}"); appendLine("Pedidos: ${payment.totalOrders}"); appendLine("Pago base: ${formatter.format(payment.totalBasePayment)}"); appendLine("Propinas: ${formatter.format(payment.totalTips)}"); appendLine("Comisi\u00f3n: ${formatter.format(payment.platformCommission)}"); appendLine("Neto a pagar: ${formatter.format(payment.netAmount)}"); appendLine(); appendLine("\u00bfMarcar como pagado?") })
+            .setMessage(buildString {
+                appendLine("Conductor: ${payment.driverName}"); appendLine("Semana: ${payment.weekStart} - ${payment.weekEnd}")
+                appendLine("Pedidos: ${payment.totalOrders}"); appendLine("Pago base: ${formatter.format(payment.totalBasePayment)}")
+                appendLine("Propinas: ${formatter.format(payment.totalTips)}"); appendLine("Comisión: ${formatter.format(payment.platformCommission)}")
+                appendLine("Neto a pagar: ${formatter.format(payment.netAmount)}"); appendLine(); appendLine("¿Marcar como pagado?")
+            })
             .setPositiveButton("Marcar como Pagado") { _, _ -> viewModel.processDriverPayment(payment.id, "paid") }
             .setNegativeButton("Cancelar", null).show()
     }
@@ -453,7 +607,12 @@ class AdminActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> finish()
-            R.id.action_refresh -> when (tabLayout.selectedTabPosition) { 0 -> viewModel.loadDashboardStats(); 1 -> viewModel.loadProducts(); 2 -> viewModel.loadDriverPayments(); 3 -> loadYappiPendingOrders(); 4 -> loadAdminPendingOrders(); 5 -> viewModel.loadInventoryLogs() }
+            R.id.action_refresh -> when (tabLayout.selectedTabPosition) {
+                0 -> viewModel.loadDashboardStats(); 1 -> viewModel.loadProducts()
+                2 -> viewModel.loadDriverPayments(); 3 -> loadYappiPendingOrders()
+                4 -> loadAdminPendingOrders(); 5 -> viewModel.loadInventoryLogs()
+                6 -> loadAndShowBanners()
+            }
             R.id.action_calculate_payments -> showCalculatePaymentsDialog()
             R.id.action_logout -> { SessionManager.logout(); startActivity(Intent(this, LoginActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }); finish() }
         }

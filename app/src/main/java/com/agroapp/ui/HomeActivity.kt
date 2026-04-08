@@ -1,6 +1,9 @@
 ﻿package com.agroapp.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +16,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
@@ -29,6 +33,7 @@ import com.agroapp.model.Banner
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import com.agroapp.viewmodel.ProductViewModel
+import com.bumptech.glide.Glide
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.launch
@@ -57,6 +62,12 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) Log.d("HomeActivity", "✅ Permiso de notificaciones concedido")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
@@ -66,6 +77,7 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
+        requestNotificationPermission()
         initViews()
         setupDrawer()
         setupDireccion()
@@ -77,12 +89,54 @@ class HomeActivity : AppCompatActivity() {
         setupBannerCarousel()
         setupFooter()
         checkActiveOrder()
+        loadStaticBanners() // ✅ NUEVO
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    // ✅ NUEVO: carga las imágenes de los 3 banners estáticos desde el backend
+    private fun loadStaticBanners() {
+        val ivBanner1 = findViewById<ImageView>(R.id.ivBanner1)
+        val ivBanner2 = findViewById<ImageView>(R.id.ivBanner2)
+        val ivBanner3 = findViewById<ImageView>(R.id.ivBanner3)
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.instance.getBanners()
+                if (response.isSuccessful) {
+                    val banners = response.body() ?: return@launch
+                    banners.forEach { banner ->
+                        val imageUrl = banner.imageUrl ?: return@forEach
+                        val iv = when (banner.slot) {
+                            1 -> ivBanner1
+                            2 -> ivBanner2
+                            3 -> ivBanner3
+                            else -> null
+                        } ?: return@forEach
+                        Glide.with(this@HomeActivity)
+                            .load(imageUrl)
+                            .centerCrop()
+                            .into(iv)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeActivity", "Error cargando banners: ${e.message}")
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         if (SessionManager.isLoggedIn()) {
             checkActiveOrder()
+            loadStaticBanners() // ✅ refresca al volver
             if (bannerCount > 0) {
                 autoScrollHandler.removeCallbacks(autoScrollRunnable)
                 autoScrollHandler.postDelayed(autoScrollRunnable, AUTO_SCROLL_DELAY)
@@ -126,16 +180,11 @@ class HomeActivity : AppCompatActivity() {
     private fun checkActiveOrder() {
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.instance.getActiveOrder(
-                    token = SessionManager.getToken()
-                )
+                val response = RetrofitClient.instance.getActiveOrder(token = SessionManager.getToken())
                 if (response.isSuccessful && response.body() != null) {
                     val order = response.body()!!
-                    if (order.driver_id != null) {
-                        showActiveOrderBanner(order)
-                    } else {
-                        cardActiveOrder.visibility = View.GONE
-                    }
+                    if (order.driver_id != null) showActiveOrderBanner(order)
+                    else cardActiveOrder.visibility = View.GONE
                 } else {
                     cardActiveOrder.visibility = View.GONE
                 }
@@ -166,7 +215,6 @@ class HomeActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // ✅ Fix crash: verificar que el drawer no esté ya abierto antes de abrir
         toolbar.setNavigationOnClickListener {
             if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 drawerLayout.openDrawer(GravityCompat.START, false)
@@ -175,14 +223,11 @@ class HomeActivity : AppCompatActivity() {
 
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_home -> { /* ya estamos aquí */ }
+                R.id.nav_home -> { }
                 R.id.nav_profile -> startActivity(Intent(this, ProfileActivity::class.java))
                 R.id.nav_orders -> startActivity(Intent(this, OrdersActivity::class.java))
                 R.id.nav_cart -> startActivity(Intent(this, CartActivity::class.java))
-                R.id.nav_logout -> {
-                    SessionManager.logout()
-                    goToLogin()
-                }
+                R.id.nav_logout -> { SessionManager.logout(); goToLogin() }
                 R.id.nav_settings -> Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
             }
             drawerLayout.closeDrawer(GravityCompat.START, false)
@@ -193,50 +238,32 @@ class HomeActivity : AppCompatActivity() {
     private fun setupDireccion() {
         val tvDireccion = findViewById<TextView>(R.id.tvDireccion)
         val tvCambiarDireccion = findViewById<TextView>(R.id.tvCambiarDireccion)
-
         val direccion = SessionManager.getAddress()
         tvDireccion.text = if (direccion.isNotEmpty()) direccion else "Dirección no especificada"
-
-        tvCambiarDireccion.setOnClickListener {
-            startActivity(Intent(this, ProfileActivity::class.java))
-        }
+        tvCambiarDireccion.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
     }
 
     private fun setupSearch() {
         val searchView = findViewById<AutoCompleteTextView>(R.id.searchView)
-
         viewModel.loadProducts()
         viewModel.products.observe(this) { products ->
             if (!products.isNullOrEmpty()) {
                 val productNames = products.map { it.name }
-                val autoAdapter = ArrayAdapter(
-                    this,
-                    android.R.layout.simple_dropdown_item_1line,
-                    productNames
-                )
-                searchView.setAdapter(autoAdapter)
+                searchView.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, productNames))
             }
         }
-
         searchView.setOnItemClickListener { _, _, _, _ ->
             val query = searchView.text.toString().trim()
             if (query.isNotEmpty()) {
-                startActivity(
-                    Intent(this, ProductsActivity::class.java)
-                        .putExtra("SEARCH_QUERY", query)
-                )
+                startActivity(Intent(this, ProductsActivity::class.java).putExtra("SEARCH_QUERY", query))
                 searchView.setText("")
             }
         }
-
         searchView.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 val query = searchView.text.toString().trim()
                 if (query.isNotEmpty()) {
-                    startActivity(
-                        Intent(this, ProductsActivity::class.java)
-                            .putExtra("SEARCH_QUERY", query)
-                    )
+                    startActivity(Intent(this, ProductsActivity::class.java).putExtra("SEARCH_QUERY", query))
                     searchView.setText("")
                 }
                 true
@@ -247,87 +274,43 @@ class HomeActivity : AppCompatActivity() {
     private fun setupPopularProducts() {
         val rvChips = findViewById<RecyclerView>(R.id.rvProductChips)
         chipAdapter = ProductChipAdapter(emptyList()) { product ->
-            startActivity(
-                Intent(this, ProductsActivity::class.java)
-                    .putExtra("SEARCH_QUERY", product.name)
-            )
+            startActivity(Intent(this, ProductsActivity::class.java).putExtra("SEARCH_QUERY", product.name))
         }
         rvChips.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         rvChips.adapter = chipAdapter
-
         viewModel.products.observe(this) { products ->
-            if (!products.isNullOrEmpty()) {
-                chipAdapter.updateProducts(products)
-            }
+            if (!products.isNullOrEmpty()) chipAdapter.updateProducts(products)
         }
     }
 
     private fun setupActionButtons() {
-        findViewById<LinearLayout>(R.id.llMisPedidos).setOnClickListener {
-            startActivity(Intent(this, OrdersActivity::class.java))
-        }
-        findViewById<LinearLayout>(R.id.llMercado).setOnClickListener {
-            startActivity(Intent(this, ProductsActivity::class.java))
-        }
-        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener {
-            Toast.makeText(this, "Próximamente...", Toast.LENGTH_SHORT).show()
-        }
+        findViewById<LinearLayout>(R.id.llMisPedidos).setOnClickListener { startActivity(Intent(this, OrdersActivity::class.java)) }
+        findViewById<LinearLayout>(R.id.llMercado).setOnClickListener { startActivity(Intent(this, ProductsActivity::class.java)) }
+        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener { Toast.makeText(this, "Próximamente...", Toast.LENGTH_SHORT).show() }
     }
 
     private fun setupCategoryCards() {
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardFrutas).setOnClickListener {
-            openCategory("Frutas")
-        }
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardVerduras).setOnClickListener {
-            openCategory("Verduras")
-        }
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardGranos).setOnClickListener {
-            openCategory("Granos")
-        }
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardRaices).setOnClickListener {
-            openCategory("Raíces y tubérculos")
-        }
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardHierbas).setOnClickListener {
-            openCategory("Hierbas y condimentos")
-        }
-        findViewById<androidx.cardview.widget.CardView>(R.id.cardCultivos).setOnClickListener {
-            openCategory("Cultivos comerciales")
-        }
+        findViewById<CardView>(R.id.cardFrutas).setOnClickListener { openCategory("Frutas") }
+        findViewById<CardView>(R.id.cardVerduras).setOnClickListener { openCategory("Verduras") }
+        findViewById<CardView>(R.id.cardGranos).setOnClickListener { openCategory("Granos") }
+        findViewById<CardView>(R.id.cardRaices).setOnClickListener { openCategory("Raíces y tubérculos") }
+        findViewById<CardView>(R.id.cardHierbas).setOnClickListener { openCategory("Hierbas y condimentos") }
+        findViewById<CardView>(R.id.cardCultivos).setOnClickListener { openCategory("Cultivos comerciales") }
     }
 
     private fun setupCart() {
-        findViewById<ImageView>(R.id.ivCart).setOnClickListener {
-            startActivity(Intent(this, CartActivity::class.java))
-        }
+        findViewById<ImageView>(R.id.ivCart).setOnClickListener { startActivity(Intent(this, CartActivity::class.java)) }
     }
 
     private fun setupBannerCarousel() {
         val banners = listOf(
-            Banner(
-                imageRes = R.drawable.banner_envio_gratis,
-                title = "🚚 Envío Gratis",
-                description = "En todos tus pedidos. ¡Compra ahora!",
-                destination = "mercado"
-            ),
-            Banner(
-                imageRes = R.drawable.banner_yappi,
-                title = "📱 Aceptamos YAPPI",
-                description = "Paga fácil y rápido con tu app favorita",
-                destination = "mercado"
-            ),
-            Banner(
-                imageRes = R.drawable.banner_comparte,
-                title = "❤️ Comparte Grün",
-                description = "Invita a tus amigos y familiares",
-                destination = "compartir"
-            )
+            Banner(imageRes = R.drawable.banner_envio_gratis, title = "🚚 Envío Gratis", description = "En todos tus pedidos. ¡Compra ahora!", destination = "mercado"),
+            Banner(imageRes = R.drawable.banner_yappi, title = "📱 Aceptamos YAPPI", description = "Paga fácil y rápido con tu app favorita", destination = "mercado"),
+            Banner(imageRes = R.drawable.banner_comparte, title = "❤️ Comparte Grün", description = "Invita a tus amigos y familiares", destination = "compartir")
         )
 
         bannerCount = banners.size
-
-        viewPager.adapter = BannerAdapter(banners) { banner ->
-            handleBannerClick(banner)
-        }
+        viewPager.adapter = BannerAdapter(banners) { banner -> handleBannerClick(banner) }
 
         val layoutIndicator = findViewById<LinearLayout>(R.id.layoutIndicator)
         layoutIndicator.removeAllViews()
@@ -336,14 +319,10 @@ class HomeActivity : AppCompatActivity() {
         for (i in dots.indices) {
             val dot = View(this).apply {
                 val params = LinearLayout.LayoutParams(
-                    if (i == 0) 24.dpToPx() else 8.dpToPx(),
-                    8.dpToPx()
+                    if (i == 0) 24.dpToPx() else 8.dpToPx(), 8.dpToPx()
                 ).also { it.setMargins(4, 0, 4, 0) }
                 layoutParams = params
-                background = ContextCompat.getDrawable(
-                    this@HomeActivity,
-                    if (i == 0) R.drawable.dot_active else R.drawable.dot_inactive
-                )
+                background = ContextCompat.getDrawable(this@HomeActivity, if (i == 0) R.drawable.dot_active else R.drawable.dot_inactive)
             }
             dots[i] = dot
             layoutIndicator.addView(dot)
@@ -357,13 +336,9 @@ class HomeActivity : AppCompatActivity() {
                     dot?.layoutParams = (dot?.layoutParams as? LinearLayout.LayoutParams)?.also {
                         it.width = if (isActive) 24.dpToPx() else 8.dpToPx()
                     }
-                    dot?.background = ContextCompat.getDrawable(
-                        this@HomeActivity,
-                        if (isActive) R.drawable.dot_active else R.drawable.dot_inactive
-                    )
+                    dot?.background = ContextCompat.getDrawable(this@HomeActivity, if (isActive) R.drawable.dot_active else R.drawable.dot_inactive)
                 }
             }
-
             override fun onPageScrollStateChanged(state: Int) {
                 if (state == ViewPager2.SCROLL_STATE_DRAGGING) {
                     autoScrollHandler.removeCallbacks(autoScrollRunnable)
@@ -392,30 +367,20 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupFooter() {
-        findViewById<TextView>(R.id.tvSocio).setOnClickListener {
-            Toast.makeText(this, "Conviértete en Socio - Próximamente", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<TextView>(R.id.tvPrivacidad).setOnClickListener {
-            Toast.makeText(this, "Política de Privacidad - Próximamente", Toast.LENGTH_SHORT).show()
-        }
+        findViewById<TextView>(R.id.tvSocio).setOnClickListener { Toast.makeText(this, "Conviértete en Socio - Próximamente", Toast.LENGTH_SHORT).show() }
+        findViewById<TextView>(R.id.tvPrivacidad).setOnClickListener { Toast.makeText(this, "Política de Privacidad - Próximamente", Toast.LENGTH_SHORT).show() }
     }
 
     private fun openCategory(categoryName: String) {
-        startActivity(
-            Intent(this, ProductsActivity::class.java)
-                .putExtra("CATEGORY", categoryName)
-        )
+        startActivity(Intent(this, ProductsActivity::class.java).putExtra("CATEGORY", categoryName))
     }
 
     private fun goToLogin() {
-        startActivity(
-            Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-        )
+        startActivity(Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
         finish()
     }
 
-    private fun Int.dpToPx(): Int =
-        (this * resources.displayMetrics.density).toInt()
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 }
