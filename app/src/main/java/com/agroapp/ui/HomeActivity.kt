@@ -3,6 +3,7 @@
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -52,8 +53,6 @@ class HomeActivity : AppCompatActivity() {
     private var currentBannerPage = 0
     private var bannerCount = 0
     private val AUTO_SCROLL_DELAY = 3500L
-
-    // ✅ Guardamos los banners cargados para manejar clicks
     private var loadedBanners: List<AppBanner> = emptyList()
 
     private val autoScrollRunnable = object : Runnable {
@@ -105,7 +104,6 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Carga banners desde backend y configura clicks
     private fun loadStaticBanners() {
         val ivBanner1 = findViewById<ImageView>(R.id.ivBanner1)
         val ivBanner2 = findViewById<ImageView>(R.id.ivBanner2)
@@ -120,20 +118,13 @@ class HomeActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val banners = response.body() ?: return@launch
                     loadedBanners = banners
-
                     banners.forEach { banner ->
                         val iv = when (banner.slot) { 1 -> ivBanner1; 2 -> ivBanner2; 3 -> ivBanner3; else -> null } ?: return@forEach
                         val card = when (banner.slot) { 1 -> cardBanner1; 2 -> cardBanner2; 3 -> cardBanner3; else -> null } ?: return@forEach
-
-                        // Cargar imagen
                         if (!banner.imageUrl.isNullOrEmpty()) {
                             Glide.with(this@HomeActivity).load(banner.imageUrl).centerCrop().into(iv)
                         }
-
-                        // ✅ Configurar click — navega al producto si tiene product_id
-                        card.setOnClickListener {
-                            handleBannerCardClick(banner)
-                        }
+                        card.setOnClickListener { handleBannerCardClick(banner) }
                     }
                 }
             } catch (e: Exception) {
@@ -142,30 +133,22 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ Click en banner — navega a ProductsActivity con el producto preseleccionado
     private fun handleBannerCardClick(banner: AppBanner) {
         when {
-            banner.productId != null && banner.productId > 0 -> {
-                // Navega a productos con el ID del producto para buscarlo
+            !banner.title.isNullOrEmpty() -> {
                 startActivity(
-                    Intent(this, ProductsActivity::class.java).apply {
-                        putExtra("PRODUCT_ID", banner.productId)
-                        putExtra("SEARCH_QUERY", banner.title ?: "")
-                    }
+                    Intent(this, ProductsActivity::class.java)
+                        .putExtra("SEARCH_QUERY", banner.title)
                 )
             }
             !banner.linkUrl.isNullOrEmpty() -> {
-                // Si tiene URL externa, abre en navegador
                 try {
-                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(banner.linkUrl)))
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(banner.linkUrl)))
                 } catch (e: Exception) {
                     Toast.makeText(this, "No se pudo abrir el enlace", Toast.LENGTH_SHORT).show()
                 }
             }
-            else -> {
-                // Sin link — va al mercado general
-                startActivity(Intent(this, ProductsActivity::class.java))
-            }
+            else -> startActivity(Intent(this, ProductsActivity::class.java))
         }
     }
 

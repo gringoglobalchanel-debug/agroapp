@@ -138,9 +138,7 @@ class AdminActivity : AppCompatActivity() {
 
     private fun hideBannersScroll() {
         val parent = recyclerView.parent as? android.view.ViewGroup ?: return
-        parent.findViewWithTag<View>("banners_scroll")?.let {
-            it.visibility = View.GONE
-        }
+        parent.findViewWithTag<View>("banners_scroll")?.visibility = View.GONE
     }
 
     private fun setupSearch() {
@@ -171,7 +169,6 @@ class AdminActivity : AppCompatActivity() {
     private fun showBannersUI(banners: List<AppBanner>) {
         val parent = recyclerView.parent as? android.view.ViewGroup ?: return
 
-        // Reusar o crear scroll
         var scrollView = parent.findViewWithTag<ScrollView>("banners_scroll")
         if (scrollView == null) {
             scrollView = ScrollView(this).apply {
@@ -193,7 +190,6 @@ class AdminActivity : AppCompatActivity() {
         scrollView.visibility = View.VISIBLE
 
         banners.forEach { banner ->
-            // Título del banner
             container.addView(TextView(this).apply {
                 text = "Banner ${banner.slot}"
                 textSize = 16f
@@ -202,7 +198,6 @@ class AdminActivity : AppCompatActivity() {
                 setPadding(0, 0, 0, 8)
             })
 
-            // Preview imagen
             val ivPreview = ImageView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 360)
                 scaleType = ImageView.ScaleType.CENTER_CROP
@@ -213,36 +208,23 @@ class AdminActivity : AppCompatActivity() {
             }
             container.addView(ivPreview)
 
-            // Campo nombre
             val etTitle = EditText(this).apply {
                 setText(banner.title ?: "")
-                hint = "Nombre del banner"
+                hint = "Nombre del producto (ej: Combo Sopero)"
                 textSize = 14f
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 12 }
             }
             container.addView(etTitle)
 
-            // Campo precio
             val etPrice = EditText(this).apply {
                 setText(if (banner.price != null && banner.price > 0) banner.price.toString() else "")
-                hint = "Precio (opcional)"
+                hint = "Precio (opcional, ej: 10.00)"
                 textSize = 14f
                 inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
             }
             container.addView(etPrice)
 
-            // Campo product_id
-            val etProductId = EditText(this).apply {
-                setText(if (banner.productId != null && banner.productId > 0) banner.productId.toString() else "")
-                hint = "ID del producto (para link al carrito)"
-                textSize = 14f
-                inputType = android.text.InputType.TYPE_CLASS_NUMBER
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
-            }
-            container.addView(etProductId)
-
-            // Botón cambiar imagen
             val btnChange = Button(this).apply {
                 text = "📷 Cambiar imagen"
                 setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
@@ -251,26 +233,24 @@ class AdminActivity : AppCompatActivity() {
             }
             btnChange.setOnClickListener {
                 currentBannerGalleryCallback = { imageBytes, _ ->
-                    uploadBannerData(banner.id, imageBytes, etTitle.text.toString(), etPrice.text.toString(), etProductId.text.toString(), ivPreview)
+                    uploadBannerData(banner.id, imageBytes, etTitle.text.toString(), etPrice.text.toString(), ivPreview)
                     currentBannerGalleryCallback = null
                 }
                 galleryLauncher.launch("image/*")
             }
             container.addView(btnChange)
 
-            // Botón guardar datos (sin cambiar imagen)
             val btnSave = Button(this).apply {
-                text = "💾 Guardar nombre/precio/producto"
+                text = "💾 Guardar nombre/precio"
                 setBackgroundColor(android.graphics.Color.parseColor("#1565C0"))
                 setTextColor(android.graphics.Color.WHITE)
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
             }
             btnSave.setOnClickListener {
-                uploadBannerData(banner.id, null, etTitle.text.toString(), etPrice.text.toString(), etProductId.text.toString(), ivPreview)
+                uploadBannerData(banner.id, null, etTitle.text.toString(), etPrice.text.toString(), ivPreview)
             }
             container.addView(btnSave)
 
-            // Divider
             container.addView(View(this).apply {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 24; bottomMargin = 24 }
                 setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
@@ -294,7 +274,7 @@ class AdminActivity : AppCompatActivity() {
         }
     }
 
-    private fun uploadBannerData(bannerId: Int, imageBytes: ByteArray?, title: String, price: String, productId: String, ivPreview: ImageView) {
+    private fun uploadBannerData(bannerId: Int, imageBytes: ByteArray?, title: String, price: String, ivPreview: ImageView) {
         progressBar.visibility = View.VISIBLE
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -305,7 +285,6 @@ class AdminActivity : AppCompatActivity() {
                 }
                 if (title.isNotEmpty()) body["title"] = title
                 if (price.isNotEmpty()) body["price"] = price
-                if (productId.isNotEmpty()) body["product_id"] = productId
 
                 val response = RetrofitClient.instance.updateBanner(
                     token = SessionManager.getToken(),
