@@ -45,7 +45,6 @@ class CartActivity : AppCompatActivity() {
     private var pendingLongitude: Double? = null
     private var selectedAddress: String = ""
 
-    // ? Keys leídas desde BuildConfig (vienen de local.properties, nunca en el código)
     private val STRIPE_PUBLISHABLE_KEY = BuildConfig.STRIPE_PUBLISHABLE_KEY
     private val STRIPE_SECRET_KEY = BuildConfig.STRIPE_SECRET_KEY
 
@@ -301,67 +300,115 @@ class CartActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(android.graphics.Color.WHITE)
         }
+
         val header = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER
-            setPadding(32, 48, 32, 32); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 48, 32, 32)
+            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
         }
-        header.addView(TextView(context).apply { text = "?"; textSize = 40f; gravity = android.view.Gravity.CENTER })
         header.addView(TextView(context).apply {
-            text = "Pagar con YAPPI"; textSize = 22f; setTextColor(android.graphics.Color.WHITE)
-            gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, 12, 0, 4)
+            text = "?"
+            textSize = 40f
+            gravity = android.view.Gravity.CENTER
         })
         header.addView(TextView(context).apply {
-            text = "Realiza tu transferencia y confirma"; textSize = 13f
-            setTextColor(android.graphics.Color.parseColor("#A5D6A7")); gravity = android.view.Gravity.CENTER
+            text = "Pagar con YAPPI"
+            textSize = 22f
+            setTextColor(android.graphics.Color.WHITE)
+            gravity = android.view.Gravity.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, 12, 0, 4)
+        })
+        header.addView(TextView(context).apply {
+            text = "Realiza tu transferencia y confirma"
+            textSize = 13f
+            setTextColor(android.graphics.Color.parseColor("#A5D6A7"))
+            gravity = android.view.Gravity.CENTER
         })
         container.addView(header)
 
-        val body = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 32, 32, 8) }
+        val body = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 8)
+        }
+
         addStep(body, "1", "Envía a este número", YAPPI_PHONE, "#2E7D32")
         addDivider(body)
-        val desglose = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 16) }
+
+        val desglose = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 16, 0, 16)
+        }
         addStepLabel(desglose, "2", "Monto a transferir")
         addAmountRow(desglose, "? Productos", "$${"%.2f".format(productsTotal)}", "#424242")
         if (selectedTip > 0) addAmountRow(desglose, "? Propina", "$${"%.2f".format(selectedTip)}", "#424242")
-        val totalRow = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 16, 0, 0) }
+
+        val totalRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 16, 0, 0)
+        }
         totalRow.addView(TextView(context).apply {
-            text = "? TOTAL"; textSize = 18f; setTextColor(android.graphics.Color.parseColor("#1B5E20"))
+            text = "? TOTAL"
+            textSize = 18f
+            setTextColor(android.graphics.Color.parseColor("#1B5E20"))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         })
         totalRow.addView(TextView(context).apply {
-            text = "$${"%.2f".format(total)}"; textSize = 22f
-            setTextColor(android.graphics.Color.parseColor("#2E7D32")); typeface = android.graphics.Typeface.DEFAULT_BOLD
+            text = "$${"%.2f".format(total)}"
+            textSize = 22f
+            setTextColor(android.graphics.Color.parseColor("#2E7D32"))
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
-        desglose.addView(totalRow); body.addView(desglose); addDivider(body)
+        desglose.addView(totalRow)
+        body.addView(desglose)
+        addDivider(body)
+
         body.addView(TextView(context).apply {
-            text = "??  Tu pedido quedará en estado \"Esperando confirmación\" hasta que verifiquemos tu pago."
-            textSize = 12f; setTextColor(android.graphics.Color.parseColor("#E65100")); setPadding(0, 16, 0, 8)
+            text = "?? Tu pedido quedará en estado \"Esperando confirmación\" hasta que verifiquemos tu pago."
+            textSize = 12f
+            setTextColor(android.graphics.Color.parseColor("#E65100"))
+            setPadding(0, 16, 0, 8)
         })
         container.addView(body)
 
-        val btnContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 8, 32, 32) }
+        val btnContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 8, 32, 32)
+        }
+
         val btnOpenYappi = Button(context).apply {
-            text = "?  Abrir YAPPI"; textSize = 15f; setTextColor(android.graphics.Color.WHITE)
+            text = "? Abrir YAPPI"
+            textSize = 15f
+            setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }
             setPadding(0, 16, 0, 16)
         }
         btnOpenYappi.setOnClickListener { openYappiApp(total) }
+
         val btnYaPague = Button(context).apply {
-            text = "?  Ya realicé el pago"; textSize = 15f
+            text = "? Ya realicé el pago"
+            textSize = 15f
             setTextColor(android.graphics.Color.parseColor("#2E7D32"))
             setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }
             setPadding(0, 16, 0, 16)
         }
+
         val btnCancelar = Button(context).apply {
-            text = "Cancelar"; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#757575"))
+            text = "Cancelar"
+            textSize = 14f
+            setTextColor(android.graphics.Color.parseColor("#757575"))
             setBackgroundColor(android.graphics.Color.TRANSPARENT)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             setPadding(0, 8, 0, 8)
         }
-        btnContainer.addView(btnOpenYappi); btnContainer.addView(btnYaPague); btnContainer.addView(btnCancelar)
+
+        btnContainer.addView(btnOpenYappi)
+        btnContainer.addView(btnYaPague)
+        btnContainer.addView(btnCancelar)
         container.addView(btnContainer)
 
         var dialog: AlertDialog? = null
@@ -382,37 +429,60 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun addStep(parent: LinearLayout, num: String, label: String, value: String, valueColor: String) {
-        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 16) }
+        val row = LinearLayout(parent.context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 16, 0, 16)
+        }
         addStepLabel(row, num, label)
         row.addView(TextView(parent.context).apply {
-            text = value; textSize = 28f; setTextColor(android.graphics.Color.parseColor(valueColor))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD; gravity = android.view.Gravity.CENTER; setPadding(0, 8, 0, 0)
+            text = value
+            textSize = 28f
+            setTextColor(android.graphics.Color.parseColor(valueColor))
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 8, 0, 0)
         })
         parent.addView(row)
     }
 
     private fun addStepLabel(parent: LinearLayout, num: String, label: String) {
-        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0, 0, 0, 8) }
+        val row = LinearLayout(parent.context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, 8)
+        }
         row.addView(TextView(parent.context).apply {
-            text = num; textSize = 12f; setTextColor(android.graphics.Color.WHITE)
-            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")); setPadding(16, 6, 16, 6)
+            text = num
+            textSize = 12f
+            setTextColor(android.graphics.Color.WHITE)
+            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
+            setPadding(16, 6, 16, 6)
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         row.addView(TextView(parent.context).apply {
-            text = "  $label"; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#757575"))
+            text = "  $label"
+            textSize = 14f
+            setTextColor(android.graphics.Color.parseColor("#757575"))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         parent.addView(row)
     }
 
     private fun addAmountRow(parent: LinearLayout, label: String, value: String, valueColor: String) {
-        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 6, 0, 6) }
+        val row = LinearLayout(parent.context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 6, 0, 6)
+        }
         row.addView(TextView(parent.context).apply {
-            text = label; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#666666"))
+            text = label
+            textSize = 14f
+            setTextColor(android.graphics.Color.parseColor("#666666"))
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         })
         row.addView(TextView(parent.context).apply {
-            text = value; textSize = 14f; setTextColor(android.graphics.Color.parseColor(valueColor))
+            text = value
+            textSize = 14f
+            setTextColor(android.graphics.Color.parseColor(valueColor))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         parent.addView(row)
