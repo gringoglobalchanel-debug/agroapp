@@ -38,13 +38,11 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var isPolling = true
 
-    // ✅ NUEVO: referencias UI del driver
     private lateinit var ivDriverAvatar: ShapeableImageView
     private lateinit var tvDriverName: TextView
     private lateinit var layoutDriverInfo: View
     private lateinit var dividerDriver: View
 
-    // ✅ Para no recargar avatar en cada poll si ya se cargó
     private var driverInfoLoaded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,11 +55,10 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         deliveryLat = intent.getDoubleExtra("delivery_lat", 0.0)
         deliveryLng = intent.getDoubleExtra("delivery_lng", 0.0)
 
-        // ✅ NUEVO: bind vistas del driver
-        ivDriverAvatar  = findViewById(R.id.ivDriverAvatar)
-        tvDriverName    = findViewById(R.id.tvDriverName)
+        ivDriverAvatar   = findViewById(R.id.ivDriverAvatar)
+        tvDriverName     = findViewById(R.id.tvDriverName)
         layoutDriverInfo = findViewById(R.id.layoutDriverInfo)
-        dividerDriver   = findViewById(R.id.dividerDriver)
+        dividerDriver    = findViewById(R.id.dividerDriver)
 
         setupUI()
         setupMap()
@@ -99,17 +96,18 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun startPolling() {
-        if (driverId.isEmpty()) {
-            Log.e("TrackingActivity", "driverId vacío, no se puede rastrear")
+        if (orderId.isEmpty()) {
+            Log.e("TrackingActivity", "orderId vacío, no se puede rastrear")
             return
         }
 
         lifecycleScope.launch {
             while (isPolling) {
                 try {
-                    val response = RetrofitClient.instance.getDriverLocationByDriver(
+                    // ✅ CORREGIDO: usa orderId en lugar de driverId
+                    val response = RetrofitClient.instance.getDriverLocation(
                         token = SessionManager.getToken(),
-                        driverId = driverId
+                        orderId = orderId
                     )
                     if (response.isSuccessful) {
                         response.body()?.let { loc ->
@@ -118,7 +116,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
                             if (lat != null && lng != null && lat != 0.0 && lng != 0.0) {
                                 updateDriverMarker(lat, lng)
                             }
-                            // ✅ NUEVO: mostrar info del driver solo la primera vez
                             if (!driverInfoLoaded) {
                                 val name = loc.driverName
                                 val avatar = loc.driverAvatar
@@ -137,7 +134,6 @@ class TrackingActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // ✅ NUEVO: muestra la sección del driver con foto y nombre
     private fun showDriverInfo(name: String, avatarUrl: String?) {
         runOnUiThread {
             tvDriverName.text = name
