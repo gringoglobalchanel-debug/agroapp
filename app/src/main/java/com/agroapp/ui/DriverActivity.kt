@@ -1,7 +1,10 @@
 package com.agroapp.ui
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -59,6 +62,52 @@ class DriverActivity : AppCompatActivity() {
 
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
+    // ✅ NUEVO: BroadcastReceiver para detectar llegada al destino
+    private val arrivedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val orderId = intent?.getStringExtra(DriverLocationService.EXTRA_ARRIVED_ORDER_ID) ?: return
+            val order = findOrderById(orderId) ?: return
+            val position = findPositionByOrderId(orderId)
+            if (position >= 0) {
+                pendingPhotoOrderId = orderId
+                pendingPhotoPosition = position
+                pendingPhotoAdapter = null
+                showArrivalDialog(order, position)
+            }
+        }
+    }
+
+    private fun findOrderById(orderId: String): DynamicPackageOrder? {
+        val packages = viewModel.myPackages.value ?: return null
+        for (pkg in packages) {
+            val order = pkg.orders?.find { it.order_id == orderId }
+            if (order != null) return order
+        }
+        return null
+    }
+
+    private fun findPositionByOrderId(orderId: String): Int {
+        val packages = viewModel.myPackages.value ?: return -1
+        for (pkg in packages) {
+            val idx = pkg.orders?.indexOfFirst { it.order_id == orderId } ?: -1
+            if (idx >= 0) return idx
+        }
+        return -1
+    }
+
+    private fun showArrivalDialog(order: DynamicPackageOrder, position: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("📍 ¡Llegaste al destino!")
+            .setMessage("¿Listo para confirmar la entrega de ${order.customer_name}?")
+            .setPositiveButton("📷 Tomar foto de entrega") { _, _ ->
+                pendingPhotoAdapterForMyPackages = null
+                checkCameraPermissionAndOpen()
+            }
+            .setNegativeButton("Cancelar", null)
+            .setCancelable(false)
+            .show()
+    }
+
     private val takePhotoLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -112,6 +161,17 @@ class DriverActivity : AppCompatActivity() {
         setupButtons()
     }
 
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(DriverLocationService.ACTION_ARRIVED)
+        ContextCompat.registerReceiver(this, arrivedReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try { unregisterReceiver(arrivedReceiver) } catch (e: Exception) { }
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         moveTaskToBack(true)
@@ -157,7 +217,8 @@ class DriverActivity : AppCompatActivity() {
                 checkCameraPermissionAndOpen()
             },
             onStartTripClick = { order -> startTrip(order) },
-            onWhatsAppClick = { order -> openWhatsApp(order) }
+            onWhatsAppClick = { order -> openWhatsApp(order) },
+            onCancelClick = { order -> showCancelOrderDialog(order) } // ✅ NUEVO
         )
 
         findViewById<RecyclerView>(R.id.rvAvailableBlocks).apply {
@@ -178,110 +239,65 @@ class DriverActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(android.graphics.Color.WHITE)
         }
-
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
             setPadding(32, 48, 32, 32)
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
         }
-        header.addView(TextView(this).apply {
-            text = "📦"
-            textSize = 40f
-            gravity = android.view.Gravity.CENTER
-        })
+        header.addView(TextView(this).apply { text = "📦"; textSize = 40f; gravity = android.view.Gravity.CENTER })
         header.addView(TextView(this).apply {
             text = "¿Confirmas que quieres\ntomar este viaje?"
-            textSize = 20f
-            setTextColor(android.graphics.Color.WHITE)
+            textSize = 20f; setTextColor(android.graphics.Color.WHITE)
             gravity = android.view.Gravity.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            setPadding(0, 16, 0, 0)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, 16, 0, 0)
         })
         container.addView(header)
 
-        val btnContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 24, 32, 32)
-        }
-
+        val btnContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 24, 32, 32) }
         val btnTomar = Button(this).apply {
-            text = "Tomar paquete"
-            textSize = 16f
+            text = "Tomar paquete"; textSize = 16f
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = 12 }
-            setPadding(0, 20, 0, 20)
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }
+            setPadding(0, 20, 0, 20); typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-
         val btnCancelar = Button(this).apply {
-            text = "Cancelar"
-            textSize = 15f
+            text = "Cancelar"; textSize = 15f
             setTextColor(android.graphics.Color.parseColor("#757575"))
             setBackgroundColor(android.graphics.Color.TRANSPARENT)
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             setPadding(0, 12, 0, 12)
         }
-
-        btnContainer.addView(btnTomar)
-        btnContainer.addView(btnCancelar)
+        btnContainer.addView(btnTomar); btnContainer.addView(btnCancelar)
         container.addView(btnContainer)
 
         var dialog: AlertDialog? = null
-        btnTomar.setOnClickListener {
-            dialog?.dismiss()
-            viewModel.takePackage(packageItem.id)
-        }
+        btnTomar.setOnClickListener { dialog?.dismiss(); viewModel.takePackage(packageItem.id) }
         btnCancelar.setOnClickListener { dialog?.dismiss() }
-
-        dialog = AlertDialog.Builder(this)
-            .setView(container)
-            .setCancelable(true)
-            .create()
+        dialog = AlertDialog.Builder(this).setView(container).setCancelable(true).create()
         dialog.show()
     }
 
     // ==================== INICIAR VIAJE ====================
 
-    // ✅ CORREGIDO: espera respuesta del backend antes de abrir el mapa
     private fun startTrip(order: DynamicPackageOrder) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = RetrofitClient.instance.startTrip(
-                    SessionManager.getToken(), order.order_id
-                )
+                val response = RetrofitClient.instance.startTrip(SessionManager.getToken(), order.order_id)
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
-                        Toast.makeText(
-                            this@DriverActivity,
-                            "🚴 Viaje iniciado — el cliente puede seguirte",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this@DriverActivity, "🚴 Viaje iniciado — el cliente puede seguirte", Toast.LENGTH_LONG).show()
                         startLocationTracking(order)
                         openNavigation(order)
                     } else {
                         val error = response.errorBody()?.string() ?: "Error desconocido"
-                        Toast.makeText(
-                            this@DriverActivity,
-                            "Error al iniciar viaje: $error",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this@DriverActivity, "Error al iniciar viaje: $error", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@DriverActivity,
-                        "Error: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this@DriverActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -291,6 +307,9 @@ class DriverActivity : AppCompatActivity() {
         val intent = Intent(this, DriverLocationService::class.java).apply {
             action = DriverLocationService.ACTION_START
             putExtra(DriverLocationService.EXTRA_ORDER_ID, order.order_id)
+            // ✅ NUEVO: pasar coordenadas del destino para detectar llegada
+            order.delivery_latitude?.let { putExtra(DriverLocationService.EXTRA_DEST_LAT, it) }
+            order.delivery_longitude?.let { putExtra(DriverLocationService.EXTRA_DEST_LNG, it) }
         }
         ContextCompat.startForegroundService(this, intent)
         Toast.makeText(this, "📍 Compartiendo ubicación con el cliente", Toast.LENGTH_SHORT).show()
@@ -322,25 +341,57 @@ class DriverActivity : AppCompatActivity() {
         }
     }
 
+    // ==================== CANCELAR PEDIDO ====================
+
+    private fun showCancelOrderDialog(order: DynamicPackageOrder) {
+        AlertDialog.Builder(this)
+            .setTitle("❌ Cancelar pedido")
+            .setMessage("¿Estás seguro que quieres cancelar el pedido de ${order.customer_name}?\n\nEl pedido volverá a estar disponible.")
+            .setPositiveButton("Sí, cancelar") { _, _ -> cancelOrder(order) }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+    private fun cancelOrder(order: DynamicPackageOrder) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.instance.updateDeliveryOrderStatus(
+                    SessionManager.getToken(),
+                    order.order_id,
+                    com.agroapp.model.UpdateStatusRequest("pending")
+                )
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@DriverActivity, "✅ Pedido cancelado y disponible de nuevo", Toast.LENGTH_LONG).show()
+                        viewModel.loadMyPackages()
+                        viewModel.loadAvailablePackages()
+                    } else {
+                        Toast.makeText(this@DriverActivity, "Error al cancelar: ${response.errorBody()?.string()}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@DriverActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     // ==================== OBSERVERS ====================
 
     private fun setupObservers() {
         viewModel.loading.observe(this, Observer { isLoading ->
             findViewById<ProgressBar>(R.id.progressBar).visibility = if (isLoading) View.VISIBLE else View.GONE
         })
-
         viewModel.availablePackages.observe(this, Observer { packages ->
             if (packages != null) availablePackagesAdapter.submitList(packages)
         })
-
         viewModel.myPackages.observe(this, Observer { packages ->
             if (packages != null) myPackagesAdapter.submitList(packages)
         })
-
         viewModel.packageEarnings.observe(this, Observer { earnings ->
             if (earnings != null) updateEarningsUI(earnings)
         })
-
         viewModel.takePackageState.observe(this, Observer { state ->
             when (state) {
                 is TakePackageState.Loading -> Toast.makeText(this, "Procesando...", Toast.LENGTH_SHORT).show()
@@ -390,7 +441,6 @@ class DriverActivity : AppCompatActivity() {
     private fun updateEarningsUI(earnings: com.agroapp.model.DriverPackageEarnings) {
         findViewById<TextView>(R.id.tvThisWeekEarnings).text = formatter.format(earnings.driver_net_amount)
         findViewById<TextView>(R.id.tvTotalDeliveries).text = earnings.total_orders.toString()
-
         val tvTotalTips = findViewById<TextView>(R.id.tvTotalTips)
         if (earnings.total_tips > 0) {
             tvTotalTips.visibility = View.VISIBLE
@@ -398,7 +448,6 @@ class DriverActivity : AppCompatActivity() {
         } else {
             tvTotalTips.visibility = View.GONE
         }
-
         val today = LocalDate.now()
         val daysUntilFriday = (5 - today.dayOfWeek.value).let { if (it <= 0) it + 7 else it }
         val nextFriday = today.plusDays(daysUntilFriday.toLong())
@@ -446,13 +495,15 @@ class DriverActivity : AppCompatActivity() {
             .setTitle("Confirmar entrega")
             .setView(dialogView)
             .setMessage("¿Confirmas que este pedido fue entregado correctamente?")
-            .setPositiveButton("Aceptar entrega") { _, _ ->
+            .setPositiveButton("✅ Confirmar entrega") { _, _ ->
                 viewModel.updateOrderStatus(orderId, "completed")
                 Toast.makeText(this, "✅ Pedido entregado correctamente", Toast.LENGTH_SHORT).show()
                 adapter?.removeOrder(position)
                 adapterForMyPackages?.removeOrder(position)
                 photoFile.delete()
                 clearPendingPhoto()
+                // ✅ Detener el servicio de ubicación
+                stopService(Intent(this, DriverLocationService::class.java))
                 viewModel.loadMyPackages()
                 Handler(Looper.getMainLooper()).postDelayed({ viewModel.loadPackageEarnings() }, 500)
             }

@@ -136,8 +136,9 @@ data class AdminPendingOrder(
     // ✅ Indica si ya fue asignado a un driver/paquete
     @SerializedName("is_assigned") val isAssigned: Boolean = false,
     @SerializedName("driver_id") val driverId: String? = null,
-    val items: List<AdminPendingOrderItem> = emptyList()
+    val items: List<AdminPendingOrderItem> = emptyList( )
 )
+
 
 data class AdminPendingOrderItem(val name: String, val unit: String, val quantity: Double, val subtotal: Double)
 

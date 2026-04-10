@@ -26,22 +26,28 @@ class DriverLocationService : Service() {
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
     private var currentOrderId: String? = null
+    private var destinationLat: Double? = null
+    private var destinationLng: Double? = null
+    private var arrivedNotified = false
     private val api = RetrofitClient.instance
 
     companion object {
         const val ACTION_START = "start"
         const val ACTION_STOP = "stop"
         const val EXTRA_ORDER_ID = "order_id"
+        const val EXTRA_DEST_LAT = "dest_lat"
+        const val EXTRA_DEST_LNG = "dest_lng"
+        const val ACTION_ARRIVED = "com.agroapp.DRIVER_ARRIVED"
+        const val EXTRA_ARRIVED_ORDER_ID = "arrived_order_id"
+        const val ARRIVAL_RADIUS_METERS = 100f
     }
 
     override fun onCreate() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
             .setMinUpdateIntervalMillis(3000)
             .build()
-
         createNotificationChannel()
     }
 
@@ -49,15 +55,15 @@ class DriverLocationService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 currentOrderId = intent.getStringExtra(EXTRA_ORDER_ID)
+                destinationLat = intent.getDoubleExtra(EXTRA_DEST_LAT, 0.0).takeIf { it != 0.0 }
+                destinationLng = intent.getDoubleExtra(EXTRA_DEST_LNG, 0.0).takeIf { it != 0.0 }
+                arrivedNotified = false
                 if (currentOrderId != null) {
-                    val notification = createNotification().build()
-                    startForeground(1, notification)
+                    startForeground(1, createNotification().build())
                     startLocationUpdates()
                 }
             }
-            ACTION_STOP -> {
-                stopSelf()
-            }
+            ACTION_STOP -> stopSelf()
         }
         return START_STICKY
     }
@@ -73,6 +79,7 @@ class DriverLocationService : Service() {
             override fun onLocationResult(result: LocationResult) {
                 result.lastLocation?.let { location ->
                     sendLocationToServer(location)
+                    checkArrival(location)
                 }
             }
         }
@@ -82,6 +89,27 @@ class DriverLocationService : Service() {
             locationCallback,
             Looper.getMainLooper()
         )
+    }
+
+    private fun checkArrival(location: Location) {
+        if (arrivedNotified) return
+        val destLat = destinationLat ?: return
+        val destLng = destinationLng ?: return
+
+        val destination = Location("destination").apply {
+            latitude = destLat
+            longitude = destLng
+        }
+
+        val distanceMeters = location.distanceTo(destination)
+        if (distanceMeters <= ARRIVAL_RADIUS_METERS) {
+            arrivedNotified = true
+            val broadcast = Intent(ACTION_ARRIVED).apply {
+                putExtra(EXTRA_ARRIVED_ORDER_ID, currentOrderId)
+                setPackage(packageName)
+            }
+            sendBroadcast(broadcast)
+        }
     }
 
     private fun sendLocationToServer(location: Location) {
@@ -94,9 +122,7 @@ class DriverLocationService : Service() {
                     longitude = location.longitude
                 )
                 api.updateDriverLocation(token, request)
-            } catch (e: Exception) {
-                // Error silencioso
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -116,8 +142,7 @@ class DriverLocationService : Service() {
                 "Servicio de entrega",
                 NotificationManager.IMPORTANCE_LOW
             )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 

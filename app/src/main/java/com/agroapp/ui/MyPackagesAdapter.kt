@@ -25,7 +25,8 @@ import java.util.Locale
 class MyPackagesAdapter(
     private val onConfirmClick: (orderId: String, position: Int, adapter: MyPackageOrdersAdapter) -> Unit,
     private val onStartTripClick: (DynamicPackageOrder) -> Unit,
-    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit
+    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit,
+    private val onCancelClick: (DynamicPackageOrder) -> Unit // ✅ NUEVO
 ) : RecyclerView.Adapter<MyPackagesAdapter.PackageViewHolder>() {
 
     private var packages: List<DynamicPackage> = emptyList()
@@ -103,7 +104,13 @@ class MyPackagesAdapter(
             } catch (e: Exception) { }
 
             val orders = packageItem.orders ?: emptyList()
-            val adapter = MyPackageOrdersAdapter(orders, onConfirmClick, onStartTripClick, onWhatsAppClick)
+            val adapter = MyPackageOrdersAdapter(
+                orders,
+                onConfirmClick,
+                onStartTripClick,
+                onWhatsAppClick,
+                onCancelClick // ✅ NUEVO
+            )
             rvOrdersInMyPackage.layoutManager = LinearLayoutManager(itemView.context)
             rvOrdersInMyPackage.adapter = adapter
         }
@@ -122,7 +129,8 @@ class MyPackageOrdersAdapter(
     private val orders: List<DynamicPackageOrder>,
     private val onConfirmClick: (orderId: String, position: Int, adapter: MyPackageOrdersAdapter) -> Unit,
     private val onStartTripClick: (DynamicPackageOrder) -> Unit,
-    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit
+    private val onWhatsAppClick: (DynamicPackageOrder) -> Unit,
+    private val onCancelClick: (DynamicPackageOrder) -> Unit // ✅ NUEVO
 ) : RecyclerView.Adapter<MyPackageOrdersAdapter.OrderViewHolder>() {
 
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
@@ -155,7 +163,7 @@ class MyPackageOrdersAdapter(
         private val btnStartTrip: Button = itemView.findViewById(R.id.btnStartTrip)
         private val btnTakePhoto: Button = itemView.findViewById(R.id.btnTakePhoto)
         private val btnWhatsApp: Button = itemView.findViewById(R.id.btnWhatsApp)
-        // ✅ NUEVO: avatar del cliente
+        private val btnCancel: Button = itemView.findViewById(R.id.btnCancelOrder) // ✅ NUEVO
         private val ivCustomerAvatar: ShapeableImageView = itemView.findViewById(R.id.ivCustomerAvatar)
 
         fun bind(order: DynamicPackageOrder, position: Int) {
@@ -188,8 +196,8 @@ class MyPackageOrdersAdapter(
             btnStartTrip.setOnClickListener { onStartTripClick(order) }
             btnTakePhoto.setOnClickListener { onConfirmClick(order.order_id, position, this@MyPackageOrdersAdapter) }
             btnWhatsApp.setOnClickListener { onWhatsAppClick(order) }
+            btnCancel.setOnClickListener { onCancelClick(order) } // ✅ NUEVO
 
-            // ✅ NUEVO: cargar avatar del cliente
             loadCustomerAvatar(order.user_id)
         }
 
@@ -215,9 +223,7 @@ class MyPackageOrdersAdapter(
                             }
                         }
                     }
-                } catch (e: Exception) {
-                    // Si falla, queda el placeholder — no hay crash
-                }
+                } catch (e: Exception) { }
             }
         }
     }
