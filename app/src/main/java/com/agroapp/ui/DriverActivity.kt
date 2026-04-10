@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -93,7 +92,7 @@ class DriverActivity : AppCompatActivity() {
     ) { isGranted ->
         if (isGranted) openCamera()
         else {
-            Toast.makeText(this, "Se necesita permiso de c\u00e1mara", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Se necesita permiso de cámara", Toast.LENGTH_LONG).show()
             clearPendingPhoto()
         }
     }
@@ -128,7 +127,7 @@ class DriverActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Gr\u00fcn"
+        supportActionBar?.title = "Grün"
         toolbar.setTitleTextColor(resources.getColor(android.R.color.white, theme))
 
         val userName = SessionManager.getUserName()
@@ -175,13 +174,11 @@ class DriverActivity : AppCompatActivity() {
     // ==================== MODAL TOMAR PAQUETE ====================
 
     private fun showTakePackageDialog(packageItem: DynamicPackage) {
-        // ✅ Modal limpio y profesional
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(android.graphics.Color.WHITE)
         }
 
-        // Header verde
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
@@ -189,12 +186,12 @@ class DriverActivity : AppCompatActivity() {
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
         }
         header.addView(TextView(this).apply {
-            text = "\uD83D\uDCE6"
+            text = "📦"
             textSize = 40f
             gravity = android.view.Gravity.CENTER
         })
         header.addView(TextView(this).apply {
-            text = "\u00bfConfirmas que quieres\ntomar este viaje?"
+            text = "¿Confirmas que quieres\ntomar este viaje?"
             textSize = 20f
             setTextColor(android.graphics.Color.WHITE)
             gravity = android.view.Gravity.CENTER
@@ -203,7 +200,6 @@ class DriverActivity : AppCompatActivity() {
         })
         container.addView(header)
 
-        // Botones
         val btnContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(32, 24, 32, 32)
@@ -254,22 +250,40 @@ class DriverActivity : AppCompatActivity() {
 
     // ==================== INICIAR VIAJE ====================
 
+    // ✅ CORREGIDO: espera respuesta del backend antes de abrir el mapa
     private fun startTrip(order: DynamicPackageOrder) {
-        notifyTripStarted(order.order_id)
-        startLocationTracking(order)
-        openNavigation(order)
-    }
-
-    private fun notifyTripStarted(orderId: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = RetrofitClient.instance.startTrip(SessionManager.getToken(), orderId)
+                val response = RetrofitClient.instance.startTrip(
+                    SessionManager.getToken(), order.order_id
+                )
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
-                        Toast.makeText(this@DriverActivity, "\uD83D\uDEB4 Viaje iniciado \u2014 el cliente puede seguirte", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@DriverActivity,
+                            "🚴 Viaje iniciado — el cliente puede seguirte",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        startLocationTracking(order)
+                        openNavigation(order)
+                    } else {
+                        val error = response.errorBody()?.string() ?: "Error desconocido"
+                        Toast.makeText(
+                            this@DriverActivity,
+                            "Error al iniciar viaje: $error",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@DriverActivity,
+                        "Error: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
     }
 
@@ -279,7 +293,7 @@ class DriverActivity : AppCompatActivity() {
             putExtra(DriverLocationService.EXTRA_ORDER_ID, order.order_id)
         }
         ContextCompat.startForegroundService(this, intent)
-        Toast.makeText(this, "\uD83D\uDCCD Compartiendo ubicaci\u00f3n con el cliente", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "📍 Compartiendo ubicación con el cliente", Toast.LENGTH_SHORT).show()
     }
 
     private fun openNavigation(order: DynamicPackageOrder) {
@@ -294,7 +308,7 @@ class DriverActivity : AppCompatActivity() {
                 Toast.makeText(this, "No se pudo abrir el mapa", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(this, "No hay ubicaci\u00f3n disponible", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No hay ubicación disponible", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -380,7 +394,7 @@ class DriverActivity : AppCompatActivity() {
         val tvTotalTips = findViewById<TextView>(R.id.tvTotalTips)
         if (earnings.total_tips > 0) {
             tvTotalTips.visibility = View.VISIBLE
-            tvTotalTips.text = "\uD83D\uDCB8 Propinas: ${formatter.format(earnings.total_tips)}"
+            tvTotalTips.text = "💸 Propinas: ${formatter.format(earnings.total_tips)}"
         } else {
             tvTotalTips.visibility = View.GONE
         }
@@ -413,7 +427,7 @@ class DriverActivity : AppCompatActivity() {
         if (intent.resolveActivity(packageManager) != null) {
             takePhotoLauncher.launch(intent)
         } else {
-            Toast.makeText(this, "No hay c\u00e1mara disponible", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No hay cámara disponible", Toast.LENGTH_SHORT).show()
             clearPendingPhoto()
         }
     }
@@ -431,10 +445,10 @@ class DriverActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Confirmar entrega")
             .setView(dialogView)
-            .setMessage("\u00bfConfirmas que este pedido fue entregado correctamente?")
+            .setMessage("¿Confirmas que este pedido fue entregado correctamente?")
             .setPositiveButton("Aceptar entrega") { _, _ ->
                 viewModel.updateOrderStatus(orderId, "completed")
-                Toast.makeText(this, "\u2705 Pedido entregado correctamente", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "✅ Pedido entregado correctamente", Toast.LENGTH_SHORT).show()
                 adapter?.removeOrder(position)
                 adapterForMyPackages?.removeOrder(position)
                 photoFile.delete()
@@ -452,14 +466,6 @@ class DriverActivity : AppCompatActivity() {
             }
             .setCancelable(false)
             .show()
-    }
-
-    private fun formatDate(dateString: String): String {
-        return try {
-            val date = java.time.format.DateTimeFormatter.ISO_DATE_TIME.parse(dateString)
-            val localDate = java.time.LocalDateTime.from(date)
-            localDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm"))
-        } catch (e: Exception) { dateString }
     }
 
     private fun clearPendingPhoto() {
