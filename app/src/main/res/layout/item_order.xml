@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- ── HEADER VERDE ── -->
+        <!-- HEADER -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
 
         </LinearLayout>
 
-        <!-- ── BODY ── -->
+        <!-- BODY -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,11 +72,10 @@
             android:paddingTop="14dp"
             android:paddingBottom="4dp">
 
-            <!-- Etiqueta productos -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="\uD83D\uDED2  Productos"
+                android:text="Productos"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="#9E9E9E"
@@ -92,14 +91,12 @@
                 android:lineSpacingExtra="6dp"
                 android:layout_marginBottom="14dp" />
 
-            <!-- Separador punteado -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#E8F5E9"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Resumen costos -->
             <TextView
                 android:id="@+id/tvTotal"
                 android:layout_width="match_parent"
@@ -110,7 +107,6 @@
                 android:fontFamily="monospace"
                 android:layout_marginBottom="14dp" />
 
-            <!-- Ventana de entrega -->
             <TextView
                 android:id="@+id/tvDeliveryWindow"
                 android:layout_width="match_parent"
@@ -123,7 +119,7 @@
                 android:visibility="gone"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Botones -->
+            <!-- ✅ Solo boton seguir pedido -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -132,22 +128,10 @@
                 android:layout_marginBottom="12dp">
 
                 <Button
-                    android:id="@+id/btnCancel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="38dp"
-                    android:text="Cancelar"
-                    android:textSize="12sp"
-                    android:textColor="#C62828"
-                    android:backgroundTint="#FFEBEE"
-                    android:layout_marginEnd="8dp"
-                    android:visibility="gone"
-                    style="@style/Widget.MaterialComponents.Button.TextButton" />
-
-                <Button
                     android:id="@+id/btnTrack"
                     android:layout_width="wrap_content"
                     android:layout_height="38dp"
-                    android:text="\uD83D\uDEB4  Seguir pedido"
+                    android:text="Seguir pedido"
                     android:textSize="12sp"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#2E7D32"
