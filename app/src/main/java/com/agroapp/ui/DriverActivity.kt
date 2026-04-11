@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -38,6 +37,9 @@ import com.agroapp.network.SessionManager
 import com.agroapp.service.DriverLocationService
 import com.agroapp.viewmodel.DriverViewModel
 import com.agroapp.viewmodel.TakePackageState
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.google.android.material.imageview.ShapeableImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,6 +55,7 @@ class DriverActivity : AppCompatActivity() {
     private val viewModel: DriverViewModel by viewModels()
     private lateinit var availablePackagesAdapter: AvailablePackagesAdapter
     private lateinit var myPackagesAdapter: MyPackagesAdapter
+    private lateinit var ivDriverProfileAvatar: ShapeableImageView
 
     var pendingPhotoOrderId: String? = null
     var pendingPhotoPosition: Int = -1
@@ -147,6 +150,15 @@ class DriverActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // ✅ Recargar avatar por si cambió en ProfileActivity
+        val savedAvatar = SessionManager.getAvatarUrl()
+        if (savedAvatar.isNotEmpty()) {
+            Glide.with(this).load(savedAvatar).circleCrop()
+                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .placeholder(R.drawable.ic_default_avatar)
+                .into(ivDriverProfileAvatar)
+        }
         val filter = IntentFilter(DriverLocationService.ACTION_ARRIVED)
         ContextCompat.registerReceiver(this, arrivedReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
@@ -171,6 +183,18 @@ class DriverActivity : AppCompatActivity() {
         if (userName.isNotEmpty()) {
             supportActionBar?.subtitle = "Bienvenido, $userName"
             toolbar.setSubtitleTextColor(resources.getColor(android.R.color.white, theme))
+        }
+
+        // ✅ Avatar del driver en toolbar
+        ivDriverProfileAvatar = findViewById(R.id.ivDriverProfileAvatar)
+        val savedAvatar = SessionManager.getAvatarUrl()
+        if (savedAvatar.isNotEmpty()) {
+            Glide.with(this).load(savedAvatar).circleCrop()
+                .placeholder(R.drawable.ic_default_avatar)
+                .into(ivDriverProfileAvatar)
+        }
+        ivDriverProfileAvatar.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
 
         availablePackagesAdapter = AvailablePackagesAdapter(

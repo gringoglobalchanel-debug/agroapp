@@ -67,6 +67,8 @@ class AdminActivity : AppCompatActivity() {
     private var selectedImageBytes: ByteArray? = null
     private var currentImagePreview: ImageView? = null
     private var currentImageStatus: TextView? = null
+
+    // ✅ Para banners
     private var currentBannerGalleryCallback: ((ByteArray, String) -> Unit)? = null
 
     private val SUPABASE_URL = "https://eaozzabxruvqcrayejfk.supabase.co"
@@ -74,8 +76,11 @@ class AdminActivity : AppCompatActivity() {
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            if (currentBannerGalleryCallback != null) processBannerImage(it)
-            else processProductImage(it)
+            if (currentBannerGalleryCallback != null) {
+                processBannerImage(it)
+            } else {
+                processProductImage(it)
+            }
         }
     }
 
@@ -116,11 +121,10 @@ class AdminActivity : AppCompatActivity() {
         tabLayout.addTab(tabLayout.newTab().setText("YAPPI"))
         tabLayout.addTab(tabLayout.newTab().setText("Pedidos"))
         tabLayout.addTab(tabLayout.newTab().setText("Logs"))
-        tabLayout.addTab(tabLayout.newTab().setText("Banners"))
+        tabLayout.addTab(tabLayout.newTab().setText("Banners")) // ✅ NUEVO
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                hideBannersScroll()
                 when (tab?.position) {
                     0 -> { scrollStats.visibility = View.VISIBLE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; viewModel.loadDashboardStats() }
                     1 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.VISIBLE; fab.visibility = View.VISIBLE; recyclerView.adapter = productsAdapter; searchView.setQuery("", false); viewModel.loadProducts() }
@@ -128,17 +132,12 @@ class AdminActivity : AppCompatActivity() {
                     3 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = yappiAdapter; loadYappiPendingOrders() }
                     4 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = pendingOrdersAdapter; loadAdminPendingOrders() }
                     5 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; viewModel.loadInventoryLogs() }
-                    6 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; loadAndShowBanners() }
+                    6 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; loadAndShowBanners() } // ✅ NUEVO
                 }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
-    }
-
-    private fun hideBannersScroll() {
-        val parent = recyclerView.parent as? android.view.ViewGroup ?: return
-        parent.findViewWithTag<View>("banners_scroll")?.visibility = View.GONE
     }
 
     private fun setupSearch() {
@@ -157,105 +156,103 @@ class AdminActivity : AppCompatActivity() {
                 val response = RetrofitClient.instance.getAdminBanners(SessionManager.getToken())
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
-                    if (response.isSuccessful) showBannersUI(response.body() ?: emptyList())
-                    else Toast.makeText(this@AdminActivity, "Error cargando banners", Toast.LENGTH_SHORT).show()
+                    if (response.isSuccessful) {
+                        val banners = response.body() ?: emptyList()
+                        showBannersUI(banners)
+                    } else {
+                        Toast.makeText(this@AdminActivity, "Error cargando banners", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { progressBar.visibility = View.GONE; Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
     private fun showBannersUI(banners: List<AppBanner>) {
-        val parent = recyclerView.parent as? android.view.ViewGroup ?: return
-
-        var scrollView = parent.findViewWithTag<ScrollView>("banners_scroll")
-        if (scrollView == null) {
-            scrollView = ScrollView(this).apply {
-                tag = "banners_scroll"
-                layoutParams = android.widget.FrameLayout.LayoutParams(
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-                )
-            }
-            parent.addView(scrollView)
-        }
-
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(32, 32, 32, 32)
         }
-        scrollView.removeAllViews()
-        scrollView.addView(container)
-        scrollView.visibility = View.VISIBLE
 
         banners.forEach { banner ->
-            container.addView(TextView(this).apply {
-                text = "Banner ${banner.slot}"
-                textSize = 16f
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 24)
+            }
+
+            val title = TextView(this).apply {
+                text = "Banner ${banner.slot} — ${banner.title ?: "Sin título"}"
+                textSize = 14f
                 setTextColor(android.graphics.Color.parseColor("#2E7D32"))
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 setPadding(0, 0, 0, 8)
-            })
+            }
 
             val ivPreview = ImageView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 360)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 300
+                )
                 scaleType = ImageView.ScaleType.CENTER_CROP
                 setBackgroundColor(android.graphics.Color.parseColor("#F5F5F5"))
             }
+
             if (!banner.imageUrl.isNullOrEmpty()) {
                 Glide.with(this).load(banner.imageUrl).centerCrop().into(ivPreview)
             }
-            container.addView(ivPreview)
-
-            val etTitle = EditText(this).apply {
-                setText(banner.title ?: "")
-                hint = "Nombre del producto (ej: Combo Sopero)"
-                textSize = 14f
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 12 }
-            }
-            container.addView(etTitle)
-
-            val etPrice = EditText(this).apply {
-                setText(if (banner.price != null && banner.price > 0) banner.price.toString() else "")
-                hint = "Precio (opcional, ej: 10.00)"
-                textSize = 14f
-                inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
-            }
-            container.addView(etPrice)
 
             val btnChange = Button(this).apply {
                 text = "📷 Cambiar imagen"
                 setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
                 setTextColor(android.graphics.Color.WHITE)
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = 8 }
             }
+
             btnChange.setOnClickListener {
                 currentBannerGalleryCallback = { imageBytes, _ ->
-                    uploadBannerData(banner.id, imageBytes, etTitle.text.toString(), etPrice.text.toString(), ivPreview)
+                    uploadBannerImage(banner.id, imageBytes, ivPreview)
                     currentBannerGalleryCallback = null
                 }
                 galleryLauncher.launch("image/*")
             }
-            container.addView(btnChange)
 
-            val btnSave = Button(this).apply {
-                text = "💾 Guardar nombre/precio"
-                setBackgroundColor(android.graphics.Color.parseColor("#1565C0"))
-                setTextColor(android.graphics.Color.WHITE)
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = 8 }
-            }
-            btnSave.setOnClickListener {
-                uploadBannerData(banner.id, null, etTitle.text.toString(), etPrice.text.toString(), ivPreview)
-            }
-            container.addView(btnSave)
+            card.addView(title)
+            card.addView(ivPreview)
+            card.addView(btnChange)
 
-            container.addView(View(this).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 24; bottomMargin = 24 }
+            val divider = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 1
+                ).apply { topMargin = 16; bottomMargin = 16 }
                 setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
-            })
+            }
+            card.addView(divider)
+            container.addView(card)
         }
+
+        val scrollView = ScrollView(this).apply {
+            addView(container)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val parent = recyclerView.parent as? android.view.ViewGroup ?: return
+        scrollView.id = View.generateViewId()
+
+        // Eliminar scroll anterior de banners si existe
+        parent.findViewWithTag<View>("banners_scroll")?.let { parent.removeView(it) }
+        scrollView.tag = "banners_scroll"
+        parent.addView(scrollView)
+        scrollView.visibility = View.VISIBLE
+        recyclerView.visibility = View.GONE
     }
 
     private fun processBannerImage(uri: Uri) {
@@ -267,44 +264,42 @@ class AdminActivity : AppCompatActivity() {
                 val outputStream = ByteArrayOutputStream()
                 resized.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
                 val imageBytes = outputStream.toByteArray()
-                withContext(Dispatchers.Main) { currentBannerGalleryCallback?.invoke(imageBytes, "image/jpeg") }
+                withContext(Dispatchers.Main) {
+                    currentBannerGalleryCallback?.invoke(imageBytes, "image/jpeg")
+                }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@AdminActivity, "Error al leer imagen: ${e.message}", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@AdminActivity, "Error al leer imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    private fun uploadBannerData(bannerId: Int, imageBytes: ByteArray?, title: String, price: String, ivPreview: ImageView) {
+    private fun uploadBannerImage(bannerId: Int, imageBytes: ByteArray, ivPreview: ImageView) {
         progressBar.visibility = View.VISIBLE
+        val base64 = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val body = mutableMapOf<String, String>()
-                if (imageBytes != null) {
-                    body["imageBase64"] = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
-                    body["mimeType"] = "image/jpeg"
-                }
-                if (title.isNotEmpty()) body["title"] = title
-                if (price.isNotEmpty()) body["price"] = price
-
                 val response = RetrofitClient.instance.updateBanner(
                     token = SessionManager.getToken(),
                     bannerId = bannerId,
-                    body = body
+                    body = mapOf("imageBase64" to base64, "mimeType" to "image/jpeg")
                 )
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     if (response.isSuccessful) {
                         Toast.makeText(this@AdminActivity, "✅ Banner actualizado", Toast.LENGTH_SHORT).show()
-                        if (imageBytes != null) {
-                            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                            Glide.with(this@AdminActivity).load(bitmap).centerCrop().into(ivPreview)
-                        }
+                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                        Glide.with(this@AdminActivity).load(bitmap).centerCrop().into(ivPreview)
                     } else {
                         Toast.makeText(this@AdminActivity, "Error al actualizar banner", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { progressBar.visibility = View.GONE; Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -493,7 +488,7 @@ class AdminActivity : AppCompatActivity() {
     // ==================== PRODUCTOS ====================
 
     private fun showCreateProductDialog() {
-        selectedImageBase64 = null; selectedImageBytes = null; currentBannerGalleryCallback = null
+        selectedImageBase64 = null; selectedImageBytes = null
         val dialogView = layoutInflater.inflate(R.layout.dialog_product, null)
         val etName = dialogView.findViewById<EditText>(R.id.etProductName)
         val etDescription = dialogView.findViewById<EditText>(R.id.etProductDescription)
@@ -506,6 +501,7 @@ class AdminActivity : AppCompatActivity() {
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivProductImagePreview)
         val tvImageStatus = dialogView.findViewById<TextView>(R.id.tvImageStatus)
         currentImagePreview = ivPreview; currentImageStatus = tvImageStatus
+        currentBannerGalleryCallback = null
         btnPickImage.setOnClickListener { galleryLauncher.launch("image/*") }
         viewModel.categories.observe(this, Observer { categories ->
             spinnerCategory.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories?.map { it.name } ?: emptyList()).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
@@ -528,7 +524,7 @@ class AdminActivity : AppCompatActivity() {
     }
 
     private fun showEditProductDialog(product: ProductWithInventory) {
-        selectedImageBase64 = null; selectedImageBytes = null; currentBannerGalleryCallback = null
+        selectedImageBase64 = null; selectedImageBytes = null
         val dialogView = layoutInflater.inflate(R.layout.dialog_product, null)
         val etName = dialogView.findViewById<EditText>(R.id.etProductName)
         val etDescription = dialogView.findViewById<EditText>(R.id.etProductDescription)
@@ -541,6 +537,7 @@ class AdminActivity : AppCompatActivity() {
         val ivPreview = dialogView.findViewById<ImageView>(R.id.ivProductImagePreview)
         val tvImageStatus = dialogView.findViewById<TextView>(R.id.tvImageStatus)
         currentImagePreview = ivPreview; currentImageStatus = tvImageStatus
+        currentBannerGalleryCallback = null
         etName.setText(product.name); etDescription.setText(product.description ?: "")
         etPrice.setText(product.price.toString()); etUnit.setText(product.unit)
         etStock.setText((product.stock ?: 0.0).toString()); etMinStock.setText((product.minStock ?: 0.0).toString())
