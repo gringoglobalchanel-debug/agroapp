@@ -69,7 +69,7 @@
                     android:id="@+id/tvDireccion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cargando dirección..."
+                    android:text="Cargando direccion..."
                     android:textSize="13sp"
                     android:textColor="#757575"
                     android:maxLines="1"
@@ -212,18 +212,18 @@
                         android:clickable="true" android:focusable="true"
                         android:background="?android:attr/selectableItemBackground">
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                            android:text="&#128757;  Tu pedido est&#225; en camino"
+                            android:text="Tu pedido esta en camino"
                             android:textSize="13sp" android:textStyle="bold" android:textColor="#1B5E20" />
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Ver mapa &#8594;"
+                            android:text="Ver mapa"
                             android:textSize="12sp" android:textColor="#2E7D32" android:textStyle="bold" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Categorías -->
+                <!-- Categorias -->
                 <TextView
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Categor&#237;as" android:textSize="13sp" android:textStyle="bold"
+                    android:text="Categorias" android:textSize="13sp" android:textStyle="bold"
                     android:textColor="#2E7D32" android:layout_marginBottom="4dp" android:paddingStart="4dp" />
 
                 <GridLayout
@@ -271,7 +271,7 @@
                         app:cardCornerRadius="8dp" app:cardElevation="1dp">
                         <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="horizontal" android:background="#F5F5F5" android:padding="4dp">
                             <ImageView android:id="@+id/ivRaices" android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_papa" android:layout_marginEnd="4dp" />
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ra&#237;ces" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Raices" android:textSize="11sp" android:textStyle="bold" android:textColor="#2E7D32" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -313,7 +313,7 @@
                     android:gravity="center" android:orientation="horizontal"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Banners estáticos gestionables desde admin -->
+                <!-- Banners estaticos -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -328,7 +328,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardBanner1"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
+                    android:layout_height="240dp"
                     android:layout_marginBottom="8dp"
                     android:clickable="true"
                     android:focusable="true"
@@ -347,7 +347,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardBanner2"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
+                    android:layout_height="240dp"
                     android:layout_marginBottom="8dp"
                     android:clickable="true"
                     android:focusable="true"
@@ -366,7 +366,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardBanner3"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
+                    android:layout_height="240dp"
                     android:layout_marginBottom="8dp"
                     android:clickable="true"
                     android:focusable="true"
@@ -398,13 +398,13 @@
                         android:textColor="#2E7D32" android:layout_marginBottom="12dp" />
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center">
                         <TextView android:id="@+id/tvSocio" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Conv&#237;ertete en Socio" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:text="Conviertete en Socio" android:textSize="13sp" android:textColor="#2E7D32"
                             android:padding="8dp" android:clickable="true" android:focusable="true"
                             android:background="?android:attr/selectableItemBackground" />
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                             android:text="|" android:textSize="13sp" android:textColor="#757575" android:padding="4dp" />
                         <TextView android:id="@+id/tvPrivacidad" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="Pol&#237;tica de Privacidad" android:textSize="13sp" android:textColor="#2E7D32"
+                            android:text="Politica de Privacidad" android:textSize="13sp" android:textColor="#2E7D32"
                             android:padding="8dp" android:clickable="true" android:focusable="true"
                             android:background="?android:attr/selectableItemBackground" />
                     </LinearLayout>

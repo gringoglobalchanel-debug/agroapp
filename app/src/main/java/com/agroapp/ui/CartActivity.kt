@@ -62,7 +62,7 @@ class CartActivity : AppCompatActivity() {
             if (selectedAddress.isNotEmpty()) {
                 tvDeliveryAddress.text = selectedAddress
             } else if (pendingLatitude != null && pendingLongitude != null) {
-                tvDeliveryAddress.text = "? ${"%.6f".format(pendingLatitude!!)}, ${"%.6f".format(pendingLongitude!!)}"
+                tvDeliveryAddress.text = "${"%.6f".format(pendingLatitude!!)}, ${"%.6f".format(pendingLongitude!!)}"
             }
             if (pendingLatitude != null && pendingLongitude != null) {
                 SessionManager.saveDeliveryLocation(pendingLatitude!!, pendingLongitude!!, selectedAddress)
@@ -103,7 +103,7 @@ class CartActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val savedAddress = SessionManager.getAddress()
-        tvDeliveryAddress.text = if (savedAddress.isNotEmpty()) savedAddress else "Agrega tu dirección de entrega"
+        tvDeliveryAddress.text = if (savedAddress.isNotEmpty()) savedAddress else "Agrega tu direccion de entrega"
 
         btnSelectLocation.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
@@ -149,7 +149,7 @@ class CartActivity : AppCompatActivity() {
                     updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
                     etCustomTip.text.clear()
                 } catch (e: NumberFormatException) {
-                    Toast.makeText(this, "Ingresa un monto válido", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Ingresa un monto valido", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 Toast.makeText(this, "Ingresa un monto", Toast.LENGTH_SHORT).show()
@@ -165,11 +165,11 @@ class CartActivity : AppCompatActivity() {
             val cartItems = productViewModel.getCartItemsMap()
             val deliveryAddress = if (selectedAddress.isNotEmpty()) selectedAddress else tvDeliveryAddress.text.toString()
             if (cartItems.isEmpty()) {
-                Toast.makeText(this, "El carrito está vacío", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "El carrito esta vacio", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (deliveryAddress.isEmpty() || deliveryAddress == "Agrega tu dirección de entrega") {
-                Toast.makeText(this, "Por favor selecciona una dirección de entrega", Toast.LENGTH_SHORT).show()
+            if (deliveryAddress.isEmpty() || deliveryAddress == "Agrega tu direccion de entrega") {
+                Toast.makeText(this, "Por favor selecciona una direccion de entrega", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             when (paymentMethod) {
@@ -184,7 +184,7 @@ class CartActivity : AppCompatActivity() {
                 is OrderState.Loading -> { progressBar.visibility = View.VISIBLE; btnConfirmOrder.isEnabled = false }
                 is OrderState.Success -> {
                     progressBar.visibility = View.GONE; btnConfirmOrder.isEnabled = true
-                    Toast.makeText(this, "¡Pedido confirmado!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Pedido confirmado!", Toast.LENGTH_LONG).show()
                     productViewModel.clearCart(); finish()
                 }
                 is OrderState.Error -> {
@@ -209,18 +209,16 @@ class CartActivity : AppCompatActivity() {
             pendingLatitude = savedLat; pendingLongitude = savedLng; selectedAddress = savedAddress
             findViewById<TextView>(R.id.tvDeliveryAddress).text =
                 if (savedAddress.isNotEmpty()) savedAddress
-                else "? ${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
+                else "${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
         }
     }
 
     private fun processCardPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
-        if (finalTotal <= 0) { Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show(); return }
-
+        if (finalTotal <= 0) { Toast.makeText(this, "Monto invalido", Toast.LENGTH_SHORT).show(); return }
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
         pendingLatitude = latitude; pendingLongitude = longitude
-
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val amountInCents = (finalTotal * 100).toInt()
@@ -229,9 +227,7 @@ class CartActivity : AppCompatActivity() {
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Authorization", "Bearer $STRIPE_SECRET_KEY")
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
-                connection.doOutput = true
-                connection.connectTimeout = 15000
-                connection.readTimeout = 15000
+                connection.doOutput = true; connection.connectTimeout = 15000; connection.readTimeout = 15000
                 val postData = "amount=$amountInCents&currency=usd&automatic_payment_methods[enabled]=true"
                 connection.outputStream.write(postData.toByteArray())
                 val responseCode = connection.responseCode
@@ -258,9 +254,7 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun presentPaymentSheet(deliveryAddress: String) {
-        clientSecret?.let {
-            paymentSheet.presentWithPaymentIntent(it, PaymentSheet.Configuration("AgroApp Grün"))
-        }
+        clientSecret?.let { paymentSheet.presentWithPaymentIntent(it, PaymentSheet.Configuration("AgroApp Grun")) }
     }
 
     private fun onPaymentSheetResult(paymentSheetResult: PaymentSheetResult) {
@@ -278,14 +272,12 @@ class CartActivity : AppCompatActivity() {
 
     private fun processYappiPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
-        if (finalTotal <= 0) { Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show(); return }
+        if (finalTotal <= 0) { Toast.makeText(this, "Monto invalido", Toast.LENGTH_SHORT).show(); return }
         pendingTotal = finalTotal; pendingLatitude = latitude; pendingLongitude = longitude
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
         val cartItems = productViewModel.getCartItemsMap()
-        orderViewModel.createPendingYappiOrder(
-            cartItems, deliveryAddress, selectedTip, latitude, longitude
-        ) { success, orderId, referenceCode, errorMsg ->
+        orderViewModel.createPendingYappiOrder(cartItems, deliveryAddress, selectedTip, latitude, longitude) { success, orderId, referenceCode, errorMsg ->
             progressBar.visibility = View.GONE
             if (success && orderId != null && referenceCode != null) showYappiPaymentDialog(finalTotal)
             else Toast.makeText(this, errorMsg ?: "Error al procesar el pedido.", Toast.LENGTH_LONG).show()
@@ -301,6 +293,7 @@ class CartActivity : AppCompatActivity() {
             setBackgroundColor(android.graphics.Color.WHITE)
         }
 
+        // Header verde
         val header = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
@@ -308,9 +301,11 @@ class CartActivity : AppCompatActivity() {
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
         }
         header.addView(TextView(context).apply {
-            text = "?"
-            textSize = 40f
+            text = "YAPPI"
+            textSize = 28f
+            setTextColor(android.graphics.Color.WHITE)
             gravity = android.view.Gravity.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
         })
         header.addView(TextView(context).apply {
             text = "Pagar con YAPPI"
@@ -333,7 +328,7 @@ class CartActivity : AppCompatActivity() {
             setPadding(32, 32, 32, 8)
         }
 
-        addStep(body, "1", "Envía a este número", YAPPI_PHONE, "#2E7D32")
+        addStep(body, "1", "Envia a este numero", YAPPI_PHONE, "#2E7D32")
         addDivider(body)
 
         val desglose = LinearLayout(context).apply {
@@ -341,15 +336,15 @@ class CartActivity : AppCompatActivity() {
             setPadding(0, 16, 0, 16)
         }
         addStepLabel(desglose, "2", "Monto a transferir")
-        addAmountRow(desglose, "? Productos", "$${"%.2f".format(productsTotal)}", "#424242")
-        if (selectedTip > 0) addAmountRow(desglose, "? Propina", "$${"%.2f".format(selectedTip)}", "#424242")
+        addAmountRow(desglose, "Productos", "$${"%.2f".format(productsTotal)}", "#424242")
+        if (selectedTip > 0) addAmountRow(desglose, "Propina", "$${"%.2f".format(selectedTip)}", "#424242")
 
         val totalRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 16, 0, 0)
         }
         totalRow.addView(TextView(context).apply {
-            text = "? TOTAL"
+            text = "TOTAL"
             textSize = 18f
             setTextColor(android.graphics.Color.parseColor("#1B5E20"))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -366,7 +361,7 @@ class CartActivity : AppCompatActivity() {
         addDivider(body)
 
         body.addView(TextView(context).apply {
-            text = "?? Tu pedido quedará en estado \"Esperando confirmación\" hasta que verifiquemos tu pago."
+            text = "Tu pedido quedara en estado Esperando confirmacion hasta que verifiquemos tu pago."
             textSize = 12f
             setTextColor(android.graphics.Color.parseColor("#E65100"))
             setPadding(0, 16, 0, 8)
@@ -379,7 +374,7 @@ class CartActivity : AppCompatActivity() {
         }
 
         val btnOpenYappi = Button(context).apply {
-            text = "? Abrir YAPPI"
+            text = "Abrir YAPPI"
             textSize = 15f
             setTextColor(android.graphics.Color.WHITE)
             setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
@@ -389,7 +384,7 @@ class CartActivity : AppCompatActivity() {
         btnOpenYappi.setOnClickListener { openYappiApp(total) }
 
         val btnYaPague = Button(context).apply {
-            text = "? Ya realicé el pago"
+            text = "Ya realice el pago"
             textSize = 15f
             setTextColor(android.graphics.Color.parseColor("#2E7D32"))
             setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
@@ -422,8 +417,8 @@ class CartActivity : AppCompatActivity() {
     private fun showYappiConfirmationModal() {
         productViewModel.clearCart()
         AlertDialog.Builder(this)
-            .setTitle("? ¡Pago enviado!")
-            .setMessage("En unos minutos tu pedido será confirmado.\n\nVerifica el estado en \"Mis Pedidos\".")
+            .setTitle("Pago enviado!")
+            .setMessage("En unos minutos tu pedido sera confirmado.\n\nVerifica el estado en Mis Pedidos.")
             .setPositiveButton("Ver mis pedidos") { _, _ -> startActivity(Intent(this, OrdersActivity::class.java)); finish() }
             .setCancelable(false).show()
     }

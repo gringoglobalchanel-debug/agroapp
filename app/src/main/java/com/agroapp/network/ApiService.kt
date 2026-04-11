@@ -94,6 +94,9 @@ interface ApiService {
     @POST("driver/orders/{orderId}/start-trip")
     suspend fun startTrip(@Header("Authorization") token: String, @Path("orderId") orderId: String): Response<MessageResponse>
 
+    @POST("driver/orders/{orderId}/cancel")
+    suspend fun cancelDriverOrder(@Header("Authorization") token: String, @Path("orderId") orderId: String): Response<MessageResponse>
+
     @POST("driver/location")
     suspend fun updateDriverLocation(@Header("Authorization") token: String, @Body body: DriverLocationRequest): Response<MessageResponse>
 
@@ -155,18 +158,11 @@ interface ApiService {
     suspend fun assignDriverToOrder(@Header("Authorization") token: String, @Path("orderId") orderId: String, @Body body: com.agroapp.model.AssignDriverRequest): Response<MessageResponse>
 
     @GET("users/{userId}/avatar")
-    suspend fun getUserAvatar(
-        @Header("Authorization") token: String,
-        @Path("userId") userId: String
-    ): Response<UserAvatarResponse>
+    suspend fun getUserAvatar(@Header("Authorization") token: String, @Path("userId") userId: String): Response<UserAvatarResponse>
 
     @POST("auth/fcm-token")
-    suspend fun registerFcmToken(
-        @Header("Authorization") token: String,
-        @Body body: Map<String, String>
-    ): Response<MessageResponse>
+    suspend fun registerFcmToken(@Header("Authorization") token: String, @Body body: Map<String, String>): Response<MessageResponse>
 
-    // ✅ NUEVO: banners
     @GET("banners")
     suspend fun getBanners(): Response<List<AppBanner>>
 
@@ -174,11 +170,7 @@ interface ApiService {
     suspend fun getAdminBanners(@Header("Authorization") token: String): Response<List<AppBanner>>
 
     @PATCH("admin/banners/{id}")
-    suspend fun updateBanner(
-        @Header("Authorization") token: String,
-        @Path("id") bannerId: Int,
-        @Body body: Map<String, String>
-    ): Response<MessageResponse>
+    suspend fun updateBanner(@Header("Authorization") token: String, @Path("id") bannerId: Int, @Body body: Map<String, String>): Response<MessageResponse>
 }
 
 data class DriverLocationRequest(val orderId: String, val latitude: Double, val longitude: Double)
@@ -204,7 +196,6 @@ data class UserAvatarResponse(
     @SerializedName("full_name") val fullName: String?
 )
 
-// ✅ NUEVO: modelo de banner
 data class AppBanner(
     val id: Int,
     val slot: Int,
