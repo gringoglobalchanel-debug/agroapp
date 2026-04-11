@@ -68,7 +68,7 @@ class HomeActivity : AppCompatActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) Log.d("HomeActivity", "✅ Permiso de notificaciones concedido")
+        if (granted) Log.d("HomeActivity", "Permiso de notificaciones concedido")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,7 +90,6 @@ class HomeActivity : AppCompatActivity() {
         setupCategoryCards()
         setupCart()
         setupBannerCarousel()
-        setupFooter()
         checkActiveOrder()
         loadStaticBanners()
     }
@@ -136,10 +135,7 @@ class HomeActivity : AppCompatActivity() {
     private fun handleBannerCardClick(banner: AppBanner) {
         when {
             !banner.title.isNullOrEmpty() -> {
-                startActivity(
-                    Intent(this, ProductsActivity::class.java)
-                        .putExtra("SEARCH_QUERY", banner.title)
-                )
+                startActivity(Intent(this, ProductsActivity::class.java).putExtra("SEARCH_QUERY", banner.title))
             }
             !banner.linkUrl.isNullOrEmpty() -> {
                 try {
@@ -248,7 +244,7 @@ class HomeActivity : AppCompatActivity() {
                 R.id.nav_orders -> startActivity(Intent(this, OrdersActivity::class.java))
                 R.id.nav_cart -> startActivity(Intent(this, CartActivity::class.java))
                 R.id.nav_logout -> { SessionManager.logout(); goToLogin() }
-                R.id.nav_settings -> Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
+                R.id.nav_settings -> Toast.makeText(this, "Proximamente", Toast.LENGTH_SHORT).show()
             }
             drawerLayout.closeDrawer(GravityCompat.START, false)
             true
@@ -259,7 +255,7 @@ class HomeActivity : AppCompatActivity() {
         val tvDireccion = findViewById<TextView>(R.id.tvDireccion)
         val tvCambiarDireccion = findViewById<TextView>(R.id.tvCambiarDireccion)
         val direccion = SessionManager.getAddress()
-        tvDireccion.text = if (direccion.isNotEmpty()) direccion else "Dirección no especificada"
+        tvDireccion.text = if (direccion.isNotEmpty()) direccion else "Direccion no especificada"
         tvCambiarDireccion.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
     }
 
@@ -305,14 +301,14 @@ class HomeActivity : AppCompatActivity() {
     private fun setupActionButtons() {
         findViewById<LinearLayout>(R.id.llMisPedidos).setOnClickListener { startActivity(Intent(this, OrdersActivity::class.java)) }
         findViewById<LinearLayout>(R.id.llMercado).setOnClickListener { startActivity(Intent(this, ProductsActivity::class.java)) }
-        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener { Toast.makeText(this, "Próximamente...", Toast.LENGTH_SHORT).show() }
+        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener { Toast.makeText(this, "Proximamente...", Toast.LENGTH_SHORT).show() }
     }
 
     private fun setupCategoryCards() {
         findViewById<CardView>(R.id.cardFrutas).setOnClickListener { openCategory("Frutas") }
         findViewById<CardView>(R.id.cardVerduras).setOnClickListener { openCategory("Verduras") }
         findViewById<CardView>(R.id.cardGranos).setOnClickListener { openCategory("Granos") }
-        findViewById<CardView>(R.id.cardRaices).setOnClickListener { openCategory("Raíces y tubérculos") }
+        findViewById<CardView>(R.id.cardRaices).setOnClickListener { openCategory("Raices y tuberculos") }
         findViewById<CardView>(R.id.cardHierbas).setOnClickListener { openCategory("Hierbas y condimentos") }
         findViewById<CardView>(R.id.cardCultivos).setOnClickListener { openCategory("Cultivos comerciales") }
     }
@@ -323,9 +319,9 @@ class HomeActivity : AppCompatActivity() {
 
     private fun setupBannerCarousel() {
         val banners = listOf(
-            Banner(imageRes = R.drawable.banner_envio_gratis, title = "🚚 Envío Gratis", description = "En todos tus pedidos. ¡Compra ahora!", destination = "mercado"),
-            Banner(imageRes = R.drawable.banner_yappi, title = "📱 Aceptamos YAPPI", description = "Paga fácil y rápido con tu app favorita", destination = "mercado"),
-            Banner(imageRes = R.drawable.banner_comparte, title = "❤️ Comparte Grün", description = "Invita a tus amigos y familiares", destination = "compartir")
+            Banner(imageRes = R.drawable.banner_envio_gratis, title = "Envio Gratis", description = "En todos tus pedidos. Compra ahora!", destination = "mercado"),
+            Banner(imageRes = R.drawable.banner_yappi, title = "Aceptamos YAPPI", description = "Paga facil y rapido con tu app favorita", destination = "mercado"),
+            Banner(imageRes = R.drawable.banner_comparte, title = "Comparte Grun", description = "Invita a tus amigos y familiares", destination = "compartir")
         )
 
         bannerCount = banners.size
@@ -377,17 +373,12 @@ class HomeActivity : AppCompatActivity() {
             "compartir" -> {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "¡Descarga Grün y recibe tus productos frescos! Link próximamente disponible.")
+                    putExtra(Intent.EXTRA_TEXT, "Descarga Grun y recibe tus productos frescos!")
                 }
-                startActivity(Intent.createChooser(shareIntent, "Compartir Grün"))
+                startActivity(Intent.createChooser(shareIntent, "Compartir Grun"))
             }
             else -> {}
         }
-    }
-
-    private fun setupFooter() {
-        findViewById<TextView>(R.id.tvSocio).setOnClickListener { Toast.makeText(this, "Conviértete en Socio - Próximamente", Toast.LENGTH_SHORT).show() }
-        findViewById<TextView>(R.id.tvPrivacidad).setOnClickListener { Toast.makeText(this, "Política de Privacidad - Próximamente", Toast.LENGTH_SHORT).show() }
     }
 
     private fun openCategory(categoryName: String) {
