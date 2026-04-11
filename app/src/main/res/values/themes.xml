@@ -28,6 +28,23 @@
         <item name="colorSurface">#1A1A1A</item>
         <item name="android:textColorHint">#888888</item>
         <item name="android:editTextColor">#FFFFFF</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="editTextStyle">@style/DarkEditText</item>
+    </style>
+
+    <!-- ✅ NUEVO: estilo para campos de texto oscuros -->
+    <style name="DarkEditText" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorHint">#888888</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- ✅ NUEVO: estilo para TextInputLayout oscuro -->
+    <style name="DarkTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">#1A1A1A</item>
+        <item name="boxStrokeColor">#2E7D32</item>
+        <item name="hintTextColor">@color/green_700</item>
+        <item name="android:textColorHint">#888888</item>
     </style>
 
 </resources>

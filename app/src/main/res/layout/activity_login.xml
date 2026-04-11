@@ -30,7 +30,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Iniciar sesi\u00f3n"
+                android:text="Iniciar sesion"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -50,14 +50,14 @@
                     android:id="@+id/etEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Correo electr\u00f3nico"
+                    android:hint="Correo electronico"
                     android:inputType="textEmailAddress"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#888888"
                     android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Contraseña con ojito -->
+            <!-- Contrasena -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Contrase\u00f1a"
+                    android:hint="Contrasena"
                     android:inputType="textPassword"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#888888"
@@ -94,7 +94,7 @@
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:text="INICIAR SESI\u00d3N"
+                android:text="INICIAR SESION"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -108,12 +108,33 @@
                 android:visibility="gone"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Registro cliente -->
             <TextView
                 android:id="@+id/tvRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
-                android:text="\u00bfNo tienes cuenta? Reg\u00edstrate"
+                android:text="No tienes cuenta? Registrate"
                 android:textColor="#2E7D32"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Divisor -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#333333"
+                android:layout_marginBottom="8dp" />
+
+            <!-- ✅ NUEVO: Registro repartidor -->
+            <TextView
+                android:id="@+id/tvDriverRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="Eres repartidor? Unete al equipo"
+                android:textColor="#757575"
+                android:textSize="13sp"
                 android:gravity="center"
                 android:clickable="true"
                 android:focusable="true"

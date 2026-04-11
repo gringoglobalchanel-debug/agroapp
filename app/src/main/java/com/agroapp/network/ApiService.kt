@@ -10,6 +10,9 @@ interface ApiService {
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): Response<MessageResponse>
 
+    @POST("auth/register/driver")
+    suspend fun registerDriver(@Body body: Map<String, String>): Response<MessageResponse>
+
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
 

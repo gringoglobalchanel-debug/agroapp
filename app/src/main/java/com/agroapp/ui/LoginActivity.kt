@@ -24,6 +24,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var etPassword: EditText
     private lateinit var btnLogin: Button
     private lateinit var tvRegister: TextView
+    private lateinit var tvDriverRegister: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
 
@@ -42,6 +43,7 @@ class LoginActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvRegister = findViewById(R.id.tvRegister)
+        tvDriverRegister = findViewById(R.id.tvDriverRegister)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
 
@@ -49,6 +51,10 @@ class LoginActivity : AppCompatActivity() {
 
         tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        tvDriverRegister.setOnClickListener {
+            startActivity(Intent(this, DriverRegisterActivity::class.java))
         }
     }
 
@@ -65,10 +71,7 @@ class LoginActivity : AppCompatActivity() {
                 is AuthState.Success -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
-
-                    // ✅ NUEVO: registrar token FCM tras login exitoso
                     registerFcmToken()
-
                     when {
                         state.role == "admin" -> {
                             Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show()
@@ -103,7 +106,6 @@ class LoginActivity : AppCompatActivity() {
         })
     }
 
-    // ✅ NUEVO: obtiene el token FCM y lo envía al backend
     private fun registerFcmToken() {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
             CoroutineScope(Dispatchers.IO).launch {
@@ -112,9 +114,7 @@ class LoginActivity : AppCompatActivity() {
                         token = SessionManager.getToken(),
                         body = mapOf("fcm_token" to fcmToken)
                     )
-                } catch (e: Exception) {
-                    // Si falla no bloqueamos el login
-                }
+                } catch (e: Exception) { }
             }
         }
     }
@@ -122,19 +122,8 @@ class LoginActivity : AppCompatActivity() {
     private fun performLogin() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString().trim()
-
-        if (TextUtils.isEmpty(email)) {
-            etEmail.error = "Ingresa tu email"
-            etEmail.requestFocus()
-            return
-        }
-
-        if (TextUtils.isEmpty(password)) {
-            etPassword.error = "Ingresa tu contraseña"
-            etPassword.requestFocus()
-            return
-        }
-
+        if (TextUtils.isEmpty(email)) { etEmail.error = "Ingresa tu email"; etEmail.requestFocus(); return }
+        if (TextUtils.isEmpty(password)) { etPassword.error = "Ingresa tu contrasena"; etPassword.requestFocus(); return }
         viewModel.login(email, password)
     }
 
