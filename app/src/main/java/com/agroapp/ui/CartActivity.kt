@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -92,6 +93,8 @@ class CartActivity : AppCompatActivity() {
         val etCustomTip = findViewById<EditText>(R.id.etCustomTip)
         val btnApplyCustomTip = findViewById<Button>(R.id.btnApplyCustomTip)
         val tvSeguirComprando = findViewById<TextView>(R.id.tvSeguirComprando)
+        val nestedScrollView = findViewById<NestedScrollView>(R.id.nestedScrollView)
+        val layoutLocationSection = findViewById<LinearLayout>(R.id.layoutLocationSection)
 
         tvSeguirComprando.setOnClickListener { startActivity(Intent(this, ProductsActivity::class.java)) }
 
@@ -102,8 +105,20 @@ class CartActivity : AppCompatActivity() {
         supportActionBar?.title = "Mi Carrito"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val savedAddress = SessionManager.getAddress()
-        tvDeliveryAddress.text = if (savedAddress.isNotEmpty()) savedAddress else "Agrega tu direccion de entrega"
+        // ? Solo carga ubicación del mapa (delivery), NUNCA la dirección del perfil
+        val savedLat = SessionManager.getDeliveryLatitude()
+        val savedLng = SessionManager.getDeliveryLongitude()
+        val savedDeliveryAddress = SessionManager.getDeliveryAddress()
+        if (savedLat != 0.0 && savedLng != 0.0) {
+            pendingLatitude = savedLat
+            pendingLongitude = savedLng
+            selectedAddress = savedDeliveryAddress
+            tvDeliveryAddress.text = if (savedDeliveryAddress.isNotEmpty()) savedDeliveryAddress
+            else "${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
+        } else {
+            // ? Sin ubicación del mapa: texto neutro, NO mostramos dirección del perfil
+            tvDeliveryAddress.text = "Selecciona tu ubicación"
+        }
 
         btnSelectLocation.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
@@ -149,7 +164,7 @@ class CartActivity : AppCompatActivity() {
                     updateTotal(tvSubtotal, tvTotal, tvSelectedTip, layoutSelectedTip)
                     etCustomTip.text.clear()
                 } catch (e: NumberFormatException) {
-                    Toast.makeText(this, "Ingresa un monto valido", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Ingresa un monto válido", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 Toast.makeText(this, "Ingresa un monto", Toast.LENGTH_SHORT).show()
@@ -159,63 +174,98 @@ class CartActivity : AppCompatActivity() {
         btnConfirmOrder.setOnClickListener {
             val paymentMethod = when (rgPaymentMethod.checkedRadioButtonId) {
                 R.id.rbYappi -> "yappi"
-                R.id.rbCard -> "card"
-                else -> "yappi"
+                R.id.rbCard  -> "card"
+                else         -> "yappi"
             }
             val cartItems = productViewModel.getCartItemsMap()
-            val deliveryAddress = if (selectedAddress.isNotEmpty()) selectedAddress else tvDeliveryAddress.text.toString()
+
             if (cartItems.isEmpty()) {
-                Toast.makeText(this, "El carrito esta vacio", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (deliveryAddress.isEmpty() || deliveryAddress == "Agrega tu direccion de entrega") {
-                Toast.makeText(this, "Por favor selecciona una direccion de entrega", Toast.LENGTH_SHORT).show()
+
+            // ? Bug #3: Bloquear si no hay ubicación seleccionada en el mapa
+            if (pendingLatitude == null || pendingLongitude == null) {
+                Toast.makeText(
+                    this,
+                    "? Selecciona tu ubicación de entrega antes de pagar",
+                    Toast.LENGTH_LONG
+                ).show()
+                nestedScrollView.post {
+                    nestedScrollView.smoothScrollTo(0, layoutLocationSection.top)
+                }
+                layoutLocationSection.setBackgroundColor(
+                    ContextCompat.getColor(this, android.R.color.holo_orange_light)
+                )
+                layoutLocationSection.postDelayed({
+                    layoutLocationSection.setBackgroundColor(
+                        ContextCompat.getColor(this, R.color.green_50)
+                    )
+                }, 1500)
                 return@setOnClickListener
             }
+
+            val deliveryAddress = if (selectedAddress.isNotEmpty()) selectedAddress
+            else "${"%.6f".format(pendingLatitude!!)}, ${"%.6f".format(pendingLongitude!!)}"
+
             when (paymentMethod) {
-                "card" -> processCardPayment(pendingLatitude, pendingLongitude, deliveryAddress)
+                "card"  -> processCardPayment(pendingLatitude, pendingLongitude, deliveryAddress)
                 "yappi" -> processYappiPayment(pendingLatitude, pendingLongitude, deliveryAddress)
-                else -> orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null, selectedTip, pendingLatitude, pendingLongitude)
+                else    -> orderViewModel.createOrder(cartItems, paymentMethod, deliveryAddress, null, selectedTip, pendingLatitude, pendingLongitude)
             }
         }
 
         orderViewModel.orderState.observe(this, Observer { state ->
             when (state) {
-                is OrderState.Loading -> { progressBar.visibility = View.VISIBLE; btnConfirmOrder.isEnabled = false }
+                is OrderState.Loading -> {
+                    progressBar.visibility = View.VISIBLE
+                    btnConfirmOrder.isEnabled = false
+                }
                 is OrderState.Success -> {
-                    progressBar.visibility = View.GONE; btnConfirmOrder.isEnabled = true
-                    Toast.makeText(this, "Pedido confirmado!", Toast.LENGTH_LONG).show()
-                    productViewModel.clearCart(); finish()
+                    progressBar.visibility = View.GONE
+                    btnConfirmOrder.isEnabled = true
+                    SessionManager.clearDeliveryLocation()
+                    Toast.makeText(this, "¡Pedido confirmado!", Toast.LENGTH_LONG).show()
+                    productViewModel.clearCart()
+                    finish()
                 }
                 is OrderState.Error -> {
-                    progressBar.visibility = View.GONE; btnConfirmOrder.isEnabled = true
+                    progressBar.visibility = View.GONE
+                    btnConfirmOrder.isEnabled = true
                     Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
                 }
                 is OrderState.OutOfTime -> {
-                    progressBar.visibility = View.GONE; btnConfirmOrder.isEnabled = true
+                    progressBar.visibility = View.GONE
+                    btnConfirmOrder.isEnabled = true
                     Toast.makeText(this, "Pedidos solo de 8am a 12pm", Toast.LENGTH_LONG).show()
                 }
-                else -> { progressBar.visibility = View.GONE; btnConfirmOrder.isEnabled = true }
+                else -> {
+                    progressBar.visibility = View.GONE
+                    btnConfirmOrder.isEnabled = true
+                }
             }
         })
     }
 
     override fun onResume() {
         super.onResume()
+        // ? Solo carga ubicación del mapa, ignora dirección del perfil
         val savedLat = SessionManager.getDeliveryLatitude()
         val savedLng = SessionManager.getDeliveryLongitude()
-        val savedAddress = SessionManager.getAddress()
+        val savedDeliveryAddress = SessionManager.getDeliveryAddress()
         if (savedLat != 0.0 && savedLng != 0.0) {
-            pendingLatitude = savedLat; pendingLongitude = savedLng; selectedAddress = savedAddress
+            pendingLatitude = savedLat
+            pendingLongitude = savedLng
+            selectedAddress = savedDeliveryAddress
             findViewById<TextView>(R.id.tvDeliveryAddress).text =
-                if (savedAddress.isNotEmpty()) savedAddress
+                if (savedDeliveryAddress.isNotEmpty()) savedDeliveryAddress
                 else "${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
         }
     }
 
     private fun processCardPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
-        if (finalTotal <= 0) { Toast.makeText(this, "Monto invalido", Toast.LENGTH_SHORT).show(); return }
+        if (finalTotal <= 0) { Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show(); return }
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
         pendingLatitude = latitude; pendingLongitude = longitude
@@ -272,7 +322,7 @@ class CartActivity : AppCompatActivity() {
 
     private fun processYappiPayment(latitude: Double?, longitude: Double?, deliveryAddress: String) {
         val finalTotal = getFinalTotal()
-        if (finalTotal <= 0) { Toast.makeText(this, "Monto invalido", Toast.LENGTH_SHORT).show(); return }
+        if (finalTotal <= 0) { Toast.makeText(this, "Monto inválido", Toast.LENGTH_SHORT).show(); return }
         pendingTotal = finalTotal; pendingLatitude = latitude; pendingLongitude = longitude
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
@@ -288,124 +338,31 @@ class CartActivity : AppCompatActivity() {
 
     private fun buildYappiDialogView(total: Double, productsTotal: Double): View {
         val context = this
-        val container = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(android.graphics.Color.WHITE)
-        }
-
-        // Header verde
-        val header = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = android.view.Gravity.CENTER
-            setPadding(32, 48, 32, 32)
-            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
-        }
-        header.addView(TextView(context).apply {
-            text = "YAPPI"
-            textSize = 28f
-            setTextColor(android.graphics.Color.WHITE)
-            gravity = android.view.Gravity.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        })
-        header.addView(TextView(context).apply {
-            text = "Pagar con YAPPI"
-            textSize = 22f
-            setTextColor(android.graphics.Color.WHITE)
-            gravity = android.view.Gravity.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            setPadding(0, 12, 0, 4)
-        })
-        header.addView(TextView(context).apply {
-            text = "Realiza tu transferencia y confirma"
-            textSize = 13f
-            setTextColor(android.graphics.Color.parseColor("#A5D6A7"))
-            gravity = android.view.Gravity.CENTER
-        })
+        val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(android.graphics.Color.WHITE) }
+        val header = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER; setPadding(32, 48, 32, 32); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")) }
+        header.addView(TextView(context).apply { text = "YAPPI"; textSize = 28f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD })
+        header.addView(TextView(context).apply { text = "Pagar con YAPPI"; textSize = 22f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, 12, 0, 4) })
+        header.addView(TextView(context).apply { text = "Realiza tu transferencia y confirma"; textSize = 13f; setTextColor(android.graphics.Color.parseColor("#A5D6A7")); gravity = android.view.Gravity.CENTER })
         container.addView(header)
-
-        val body = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 32, 32, 8)
-        }
-
-        addStep(body, "1", "Envia a este numero", YAPPI_PHONE, "#2E7D32")
+        val body = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 32, 32, 8) }
+        addStep(body, "1", "Envía a este número", YAPPI_PHONE, "#2E7D32")
         addDivider(body)
-
-        val desglose = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, 16, 0, 16)
-        }
+        val desglose = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 16) }
         addStepLabel(desglose, "2", "Monto a transferir")
         addAmountRow(desglose, "Productos", "$${"%.2f".format(productsTotal)}", "#424242")
         if (selectedTip > 0) addAmountRow(desglose, "Propina", "$${"%.2f".format(selectedTip)}", "#424242")
-
-        val totalRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 16, 0, 0)
-        }
-        totalRow.addView(TextView(context).apply {
-            text = "TOTAL"
-            textSize = 18f
-            setTextColor(android.graphics.Color.parseColor("#1B5E20"))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        totalRow.addView(TextView(context).apply {
-            text = "$${"%.2f".format(total)}"
-            textSize = 22f
-            setTextColor(android.graphics.Color.parseColor("#2E7D32"))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        })
-        desglose.addView(totalRow)
-        body.addView(desglose)
-        addDivider(body)
-
-        body.addView(TextView(context).apply {
-            text = "Tu pedido quedara en estado Esperando confirmacion hasta que verifiquemos tu pago."
-            textSize = 12f
-            setTextColor(android.graphics.Color.parseColor("#E65100"))
-            setPadding(0, 16, 0, 8)
-        })
+        val totalRow = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 16, 0, 0) }
+        totalRow.addView(TextView(context).apply { text = "TOTAL"; textSize = 18f; setTextColor(android.graphics.Color.parseColor("#1B5E20")); typeface = android.graphics.Typeface.DEFAULT_BOLD; layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+        totalRow.addView(TextView(context).apply { text = "$${"%.2f".format(total)}"; textSize = 22f; setTextColor(android.graphics.Color.parseColor("#2E7D32")); typeface = android.graphics.Typeface.DEFAULT_BOLD })
+        desglose.addView(totalRow); body.addView(desglose); addDivider(body)
+        body.addView(TextView(context).apply { text = "Tu pedido quedará en estado Esperando confirmación hasta que verifiquemos tu pago."; textSize = 12f; setTextColor(android.graphics.Color.parseColor("#E65100")); setPadding(0, 16, 0, 8) })
         container.addView(body)
-
-        val btnContainer = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 8, 32, 32)
-        }
-
-        val btnOpenYappi = Button(context).apply {
-            text = "Abrir YAPPI"
-            textSize = 15f
-            setTextColor(android.graphics.Color.WHITE)
-            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }
-            setPadding(0, 16, 0, 16)
-        }
+        val btnContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 8, 32, 32) }
+        val btnOpenYappi = Button(context).apply { text = "Abrir YAPPI"; textSize = 15f; setTextColor(android.graphics.Color.WHITE); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }; setPadding(0, 16, 0, 16) }
         btnOpenYappi.setOnClickListener { openYappiApp(total) }
-
-        val btnYaPague = Button(context).apply {
-            text = "Ya realice el pago"
-            textSize = 15f
-            setTextColor(android.graphics.Color.parseColor("#2E7D32"))
-            setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }
-            setPadding(0, 16, 0, 16)
-        }
-
-        val btnCancelar = Button(context).apply {
-            text = "Cancelar"
-            textSize = 14f
-            setTextColor(android.graphics.Color.parseColor("#757575"))
-            setBackgroundColor(android.graphics.Color.TRANSPARENT)
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            setPadding(0, 8, 0, 8)
-        }
-
-        btnContainer.addView(btnOpenYappi)
-        btnContainer.addView(btnYaPague)
-        btnContainer.addView(btnCancelar)
-        container.addView(btnContainer)
-
+        val btnYaPague = Button(context).apply { text = "Ya realicé el pago"; textSize = 15f; setTextColor(android.graphics.Color.parseColor("#2E7D32")); setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }; setPadding(0, 16, 0, 16) }
+        val btnCancelar = Button(context).apply { text = "Cancelar"; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#757575")); setBackgroundColor(android.graphics.Color.TRANSPARENT); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT); setPadding(0, 8, 0, 8) }
+        btnContainer.addView(btnOpenYappi); btnContainer.addView(btnYaPague); btnContainer.addView(btnCancelar); container.addView(btnContainer)
         var dialog: AlertDialog? = null
         btnYaPague.setOnClickListener { dialog?.dismiss(); showYappiConfirmationModal() }
         btnCancelar.setOnClickListener { dialog?.dismiss() }
@@ -416,78 +373,37 @@ class CartActivity : AppCompatActivity() {
 
     private fun showYappiConfirmationModal() {
         productViewModel.clearCart()
+        SessionManager.clearDeliveryLocation()
         AlertDialog.Builder(this)
-            .setTitle("Pago enviado!")
-            .setMessage("En unos minutos tu pedido sera confirmado.\n\nVerifica el estado en Mis Pedidos.")
+            .setTitle("¡Pago enviado!")
+            .setMessage("En unos minutos tu pedido será confirmado.\n\nVerifica el estado en Mis Pedidos.")
             .setPositiveButton("Ver mis pedidos") { _, _ -> startActivity(Intent(this, OrdersActivity::class.java)); finish() }
             .setCancelable(false).show()
     }
 
     private fun addStep(parent: LinearLayout, num: String, label: String, value: String, valueColor: String) {
-        val row = LinearLayout(parent.context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, 16, 0, 16)
-        }
+        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 16, 0, 16) }
         addStepLabel(row, num, label)
-        row.addView(TextView(parent.context).apply {
-            text = value
-            textSize = 28f
-            setTextColor(android.graphics.Color.parseColor(valueColor))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, 8, 0, 0)
-        })
+        row.addView(TextView(parent.context).apply { text = value; textSize = 28f; setTextColor(android.graphics.Color.parseColor(valueColor)); typeface = android.graphics.Typeface.DEFAULT_BOLD; gravity = android.view.Gravity.CENTER; setPadding(0, 8, 0, 0) })
         parent.addView(row)
     }
 
     private fun addStepLabel(parent: LinearLayout, num: String, label: String) {
-        val row = LinearLayout(parent.context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
-            setPadding(0, 0, 0, 8)
-        }
-        row.addView(TextView(parent.context).apply {
-            text = num
-            textSize = 12f
-            setTextColor(android.graphics.Color.WHITE)
-            setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"))
-            setPadding(16, 6, 16, 6)
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        })
-        row.addView(TextView(parent.context).apply {
-            text = "  $label"
-            textSize = 14f
-            setTextColor(android.graphics.Color.parseColor("#757575"))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        })
+        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0, 0, 0, 8) }
+        row.addView(TextView(parent.context).apply { text = num; textSize = 12f; setTextColor(android.graphics.Color.WHITE); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")); setPadding(16, 6, 16, 6); typeface = android.graphics.Typeface.DEFAULT_BOLD })
+        row.addView(TextView(parent.context).apply { text = "  $label"; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#757575")); typeface = android.graphics.Typeface.DEFAULT_BOLD })
         parent.addView(row)
     }
 
     private fun addAmountRow(parent: LinearLayout, label: String, value: String, valueColor: String) {
-        val row = LinearLayout(parent.context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(0, 6, 0, 6)
-        }
-        row.addView(TextView(parent.context).apply {
-            text = label
-            textSize = 14f
-            setTextColor(android.graphics.Color.parseColor("#666666"))
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        row.addView(TextView(parent.context).apply {
-            text = value
-            textSize = 14f
-            setTextColor(android.graphics.Color.parseColor(valueColor))
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        })
+        val row = LinearLayout(parent.context).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, 6, 0, 6) }
+        row.addView(TextView(parent.context).apply { text = label; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#666666")); layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f) })
+        row.addView(TextView(parent.context).apply { text = value; textSize = 14f; setTextColor(android.graphics.Color.parseColor(valueColor)); typeface = android.graphics.Typeface.DEFAULT_BOLD })
         parent.addView(row)
     }
 
     private fun addDivider(parent: LinearLayout) {
-        parent.addView(View(parent.context).apply {
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 8; bottomMargin = 8 }
-            setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"))
-        })
+        parent.addView(View(parent.context).apply { layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { topMargin = 8; bottomMargin = 8 }; setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0")) })
     }
 
     private fun openYappiApp(total: Double) {

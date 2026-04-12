@@ -16,7 +16,6 @@
         app:navigationIcon="@drawable/ic_back"
         app:navigationIconTint="#FFFFFF">
 
-        <!-- Botón Seguir comprando -->
         <TextView
             android:id="@+id/tvSeguirComprando"
             android:layout_width="wrap_content"
@@ -58,6 +57,7 @@
     <View android:layout_width="match_parent" android:layout_height="2dp" android:background="#E0E0E0" />
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="55"
@@ -71,35 +71,77 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="📍 Dirección de entrega" android:textSize="13sp" android:textStyle="bold"
-                android:textColor="#212121" android:layout_marginBottom="6dp" />
+            <!-- ========== SECCIÓN UBICACIÓN ========== -->
+            <LinearLayout
+                android:id="@+id/layoutLocationSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#F1F8E9"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="10dp">
-                <TextView android:id="@+id/tvDeliveryAddress" android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Cargando dirección..." android:textSize="12sp"
-                    android:textColor="#666666" android:maxLines="1" android:ellipsize="end" />
-                <Button android:id="@+id/btnSelectLocation" android:layout_width="wrap_content" android:layout_height="32dp"
-                    android:text="📍 Seleccionar" android:textSize="11sp" android:backgroundTint="#2E7D32" android:layout_marginStart="8dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📍 Dirección de entrega"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1B5E20"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvDeliveryAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Cargando dirección..."
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginBottom="10dp" />
+
+                <!-- Botón seleccionar ubicación — GRANDE y claro -->
+                <Button
+                    android:id="@+id/btnSelectLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="🗺️  Seleccionar mi ubicación en el mapa"
+                    android:textSize="13sp"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2E7D32"
+                    android:layout_marginBottom="8dp" />
+
             </LinearLayout>
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginBottom="10dp" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Resumen del pedido" android:textSize="15sp" android:textStyle="bold"
-                android:textColor="#212121" android:layout_marginBottom="10dp" />
+            <!-- ========== RESUMEN ========== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Resumen del pedido"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="10dp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginBottom="6dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="Subtotal" android:textSize="13sp" android:textColor="#666666" />
                 <TextView android:id="@+id/tvSubtotal" android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="$0.00" android:textSize="13sp" android:textColor="#212121" android:textStyle="bold" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginBottom="6dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="🚚 Envío" android:textSize="13sp" android:textColor="#666666" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -108,12 +150,22 @@
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="8dp" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Propina" android:textSize="13sp" android:textStyle="bold"
-                android:textColor="#212121" android:layout_marginBottom="8dp" />
+            <!-- ========== PROPINA ========== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Propina"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="8dp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
                 <Button android:id="@+id/btnTip1" android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1"
                     android:text="$1" android:textSize="13sp" android:backgroundTint="#F5F5F5" android:textColor="#2E7D32"
                     android:layout_marginEnd="6dp" style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
@@ -125,8 +177,12 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
             </LinearLayout>
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
                 <EditText android:id="@+id/etCustomTip" android:layout_width="0dp" android:layout_height="42dp"
                     android:layout_weight="1" android:hint="Monto personalizado" android:inputType="numberDecimal"
                     android:textSize="13sp" android:padding="10dp" android:background="@drawable/bg_edittext_border"
@@ -135,9 +191,13 @@
                     android:text="Aplicar" android:textSize="13sp" android:backgroundTint="#2E7D32" android:paddingHorizontal="12dp" />
             </LinearLayout>
 
-            <LinearLayout android:id="@+id/layoutSelectedTip" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:orientation="horizontal"
-                android:layout_marginBottom="8dp" android:visibility="gone">
+            <LinearLayout
+                android:id="@+id/layoutSelectedTip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="Propina" android:textSize="13sp" android:textColor="#666666" />
                 <TextView android:id="@+id/tvSelectedTip" android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -146,20 +206,34 @@
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginVertical="8dp" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginBottom="12dp">
+            <!-- ========== TOTAL ========== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="Total" android:textSize="16sp" android:textStyle="bold" android:textColor="#212121" />
                 <TextView android:id="@+id/tvTotal" android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="$0.00" android:textSize="16sp" android:textStyle="bold" android:textColor="#2E7D32" />
             </LinearLayout>
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="Método de pago" android:textSize="13sp" android:textStyle="bold"
-                android:textColor="#212121" android:layout_marginBottom="8dp" />
+            <!-- ========== MÉTODO DE PAGO ========== -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Método de pago"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="8dp" />
 
-            <RadioGroup android:id="@+id/rgPaymentMethod" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+            <RadioGroup
+                android:id="@+id/rgPaymentMethod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
                 <RadioButton android:id="@+id/rbYappi" android:layout_width="0dp" android:layout_height="44dp"
                     android:layout_weight="1" android:text="📱 Yappi" android:checked="true" android:textSize="13sp"
                     android:gravity="center" android:button="@null" android:background="@drawable/bg_payment_option"
@@ -169,13 +243,23 @@
                     android:gravity="center" android:button="@null" android:background="@drawable/bg_payment_option" />
             </RadioGroup>
 
-            <ProgressBar android:id="@+id/progressBar" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:layout_gravity="center"
-                android:visibility="gone" android:layout_marginBottom="8dp" />
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
 
-            <Button android:id="@+id/btnConfirmOrder" android:layout_width="match_parent"
-                android:layout_height="48dp" android:text="CONFIRMAR PEDIDO" android:textAllCaps="true"
-                android:backgroundTint="#2E7D32" android:textSize="15sp" android:minHeight="48dp" />
+            <Button
+                android:id="@+id/btnConfirmOrder"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="CONFIRMAR PEDIDO"
+                android:textAllCaps="true"
+                android:backgroundTint="#2E7D32"
+                android:textSize="15sp"
+                android:minHeight="52dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
