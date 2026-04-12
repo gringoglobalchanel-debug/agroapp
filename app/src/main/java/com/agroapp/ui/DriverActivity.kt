@@ -1,4 +1,4 @@
-package com.agroapp.ui
+﻿package com.agroapp.ui
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -64,6 +64,12 @@ class DriverActivity : AppCompatActivity() {
     private var pendingPhotoFile: File? = null
 
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+
+    // ✅ Referencias a botones y recyclers para poder cambiar tab desde cancelOrder
+    private lateinit var btnAvailable: Button
+    private lateinit var btnMyBlocks: Button
+    private lateinit var rvAvailableBlocks: RecyclerView
+    private lateinit var rvMyBlocks: RecyclerView
 
     private val arrivedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -216,8 +222,8 @@ class DriverActivity : AppCompatActivity() {
             onCancelClick = { order -> showCancelOrderDialog(order) }
         )
 
-        findViewById<RecyclerView>(R.id.rvAvailableBlocks).apply { layoutManager = LinearLayoutManager(this@DriverActivity); adapter = availablePackagesAdapter }
-        findViewById<RecyclerView>(R.id.rvMyBlocks).apply { layoutManager = LinearLayoutManager(this@DriverActivity); adapter = myPackagesAdapter }
+        rvAvailableBlocks = findViewById<RecyclerView>(R.id.rvAvailableBlocks).apply { layoutManager = LinearLayoutManager(this@DriverActivity); adapter = availablePackagesAdapter }
+        rvMyBlocks = findViewById<RecyclerView>(R.id.rvMyBlocks).apply { layoutManager = LinearLayoutManager(this@DriverActivity); adapter = myPackagesAdapter }
     }
 
     private fun showTakePackageDialog(packageItem: DynamicPackage) {
@@ -313,8 +319,14 @@ class DriverActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Toast.makeText(this@DriverActivity, "Pedido cancelado y disponible de nuevo", Toast.LENGTH_LONG).show()
                         stopService(Intent(this@DriverActivity, DriverLocationService::class.java))
+                        // ✅ Recargar ambas listas
                         viewModel.loadMyPackages()
                         viewModel.loadAvailablePackages()
+                        // ✅ Cambiar tab a "Envios disponibles" automaticamente
+                        rvAvailableBlocks.visibility = View.VISIBLE
+                        rvMyBlocks.visibility = View.GONE
+                        btnAvailable.setBackgroundColor(resources.getColor(R.color.green_700, theme))
+                        btnMyBlocks.setBackgroundColor(resources.getColor(R.color.gray_500, theme))
                     } else {
                         Toast.makeText(this@DriverActivity, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_LONG).show()
                     }
@@ -341,19 +353,20 @@ class DriverActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        val btnAvailable = findViewById<Button>(R.id.btnAvailableBlocks)
-        val btnMyBlocks = findViewById<Button>(R.id.btnMyBlocks)
+        btnAvailable = findViewById(R.id.btnAvailableBlocks)
+        btnMyBlocks = findViewById(R.id.btnMyBlocks)
         val btnLogout = findViewById<Button>(R.id.btnLogout)
+
         btnAvailable.setOnClickListener {
-            findViewById<RecyclerView>(R.id.rvAvailableBlocks).visibility = View.VISIBLE
-            findViewById<RecyclerView>(R.id.rvMyBlocks).visibility = View.GONE
+            rvAvailableBlocks.visibility = View.VISIBLE
+            rvMyBlocks.visibility = View.GONE
             btnAvailable.setBackgroundColor(resources.getColor(R.color.green_700, theme))
             btnMyBlocks.setBackgroundColor(resources.getColor(R.color.gray_500, theme))
             viewModel.loadAvailablePackages()
         }
         btnMyBlocks.setOnClickListener {
-            findViewById<RecyclerView>(R.id.rvAvailableBlocks).visibility = View.GONE
-            findViewById<RecyclerView>(R.id.rvMyBlocks).visibility = View.VISIBLE
+            rvAvailableBlocks.visibility = View.GONE
+            rvMyBlocks.visibility = View.VISIBLE
             btnMyBlocks.setBackgroundColor(resources.getColor(R.color.green_700, theme))
             btnAvailable.setBackgroundColor(resources.getColor(R.color.gray_500, theme))
             viewModel.loadMyPackages()

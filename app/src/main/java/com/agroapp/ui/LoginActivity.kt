@@ -1,4 +1,4 @@
-package com.agroapp.ui
+﻿package com.agroapp.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -71,6 +71,9 @@ class LoginActivity : AppCompatActivity() {
                 is AuthState.Success -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
+                    // ✅ Guardar bandera de que ya inicio sesion al menos una vez
+                    getSharedPreferences("agro_prefs", MODE_PRIVATE)
+                        .edit().putBoolean("has_logged_in", true).apply()
                     registerFcmToken()
                     when {
                         state.role == "admin" -> {
