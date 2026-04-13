@@ -31,9 +31,19 @@ android {
         buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"" + stripePublishable + "\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:\\Users\\Famil\\StudioProjects\\agroapp\\agroapp-release.jks")
+            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = "agroapp"
+            keyPassword = localProperties.getProperty("KEY_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -83,7 +93,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-    // ✅ Firebase FCM
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-messaging-ktx")
     testImplementation("junit:junit:4.13.2")

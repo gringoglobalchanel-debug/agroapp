@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="#2E7D32"
-        android:title="Seleccionar ubicación"
+        android:title="Seleccionar ubicacion"
         android:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_back"
         app:navigationIconTint="@android:color/white" />
@@ -35,41 +35,31 @@
             android:id="@+id/tvSelectedAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📍 Toca el mapa para seleccionar tu ubicación"
+            android:text="Toca el mapa para seleccionar tu ubicacion"
             android:textSize="14sp"
             android:textColor="#666666"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="14dp"
             android:minHeight="48dp"
             android:gravity="center_vertical" />
 
-        <LinearLayout
+        <Button
+            android:id="@+id/btnCurrentLocation"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="56dp"
+            android:text="Mi ubicacion"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#757575"
+            android:layout_marginBottom="10dp" />
 
-            <Button
-                android:id="@+id/btnCurrentLocation"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="📍 Mi ubicación"
-                android:textSize="14sp"
-                android:backgroundTint="#757575"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/btnConfirmLocation"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="✓ Confirmar ubicación"
-                android:textSize="14sp"
-                android:backgroundTint="#2E7D32"
-                android:layout_marginStart="8dp" />
-
-        </LinearLayout>
+        <Button
+            android:id="@+id/btnConfirmLocation"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Confirmar ubicacion"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#2E7D32" />
 
     </LinearLayout>
-
 </LinearLayout>

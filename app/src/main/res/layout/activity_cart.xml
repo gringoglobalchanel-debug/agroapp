@@ -106,7 +106,7 @@
                     android:id="@+id/btnSelectLocation"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="🗺️  Seleccionar mi ubicación en el mapa"
+                    android:text="Seleccionar mi ubicación"
                     android:textSize="13sp"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#2E7D32"
