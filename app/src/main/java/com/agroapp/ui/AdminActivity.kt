@@ -24,6 +24,7 @@ import com.agroapp.network.AppBanner
 import com.agroapp.network.RetrofitClient
 import com.agroapp.network.SessionManager
 import com.agroapp.network.YappiPendingOrder
+import com.agroapp.ui.LoginActivity
 import com.agroapp.ui.adapters.AdminPendingOrdersAdapter
 import com.agroapp.ui.adapters.PaymentsAdminAdapter
 import com.agroapp.ui.adapters.ProductsAdminAdapter
@@ -121,7 +122,7 @@ class AdminActivity : AppCompatActivity() {
         tabLayout.addTab(tabLayout.newTab().setText("YAPPI"))
         tabLayout.addTab(tabLayout.newTab().setText("Pedidos"))
         tabLayout.addTab(tabLayout.newTab().setText("Logs"))
-        tabLayout.addTab(tabLayout.newTab().setText("Banners")) // ✅ NUEVO
+        tabLayout.addTab(tabLayout.newTab().setText("Banners"))
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -132,7 +133,7 @@ class AdminActivity : AppCompatActivity() {
                     3 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = yappiAdapter; loadYappiPendingOrders() }
                     4 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; recyclerView.adapter = pendingOrdersAdapter; loadAdminPendingOrders() }
                     5 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.VISIBLE; searchView.visibility = View.GONE; fab.visibility = View.GONE; viewModel.loadInventoryLogs() }
-                    6 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; loadAndShowBanners() } // ✅ NUEVO
+                    6 -> { scrollStats.visibility = View.GONE; recyclerView.visibility = View.GONE; searchView.visibility = View.GONE; fab.visibility = View.GONE; loadAndShowBanners() }
                 }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -247,7 +248,6 @@ class AdminActivity : AppCompatActivity() {
         val parent = recyclerView.parent as? android.view.ViewGroup ?: return
         scrollView.id = View.generateViewId()
 
-        // Eliminar scroll anterior de banners si existe
         parent.findViewWithTag<View>("banners_scroll")?.let { parent.removeView(it) }
         scrollView.tag = "banners_scroll"
         parent.addView(scrollView)
@@ -367,7 +367,7 @@ class AdminActivity : AppCompatActivity() {
         }
     }
 
-    // ==================== PEDIDOS PENDIENTES ====================
+    // ==================== PEDIDOS PENDIENTES (AGRUPADOS POR ZONA) ====================
 
     private fun loadAdminPendingOrders() {
         progressBar.visibility = View.VISIBLE
@@ -378,12 +378,24 @@ class AdminActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     if (response.isSuccessful) {
                         val orders = response.body() ?: emptyList()
-                        pendingOrdersAdapter.submitList(orders)
+                        // ✅ Agrupar pedidos por zona: Norte → Centro → Sur → Sin zona
+                        val groupedOrders = groupOrdersByZone(orders)
+                        pendingOrdersAdapter.submitList(groupedOrders)
                         if (orders.isEmpty()) Toast.makeText(this@AdminActivity, "No hay pedidos pendientes", Toast.LENGTH_SHORT).show()
                     } else Toast.makeText(this@AdminActivity, "Error cargando pedidos", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) { withContext(Dispatchers.Main) { progressBar.visibility = View.GONE; Toast.makeText(this@AdminActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show() } }
         }
+    }
+
+    // ✅ Función para agrupar pedidos por zona (Norte → Centro → Sur → Sin zona)
+    private fun groupOrdersByZone(orders: List<AdminPendingOrder>): List<AdminPendingOrder> {
+        val norte = orders.filter { it.zone == "norte" }
+        val centro = orders.filter { it.zone == "centro" }
+        val sur = orders.filter { it.zone == "sur" }
+        val sinZona = orders.filter { it.zone.isNullOrEmpty() }
+
+        return norte + centro + sur + sinZona
     }
 
     // ==================== ASIGNACION MANUAL DRIVER ====================
@@ -619,7 +631,10 @@ class AdminActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onBackPressed() { moveTaskToBack(true) }
+    override fun onBackPressed() {
+        moveTaskToBack(true)
+        super.onBackPressed()
+    }
 
     private fun showCalculatePaymentsDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_calculate_payment, null)

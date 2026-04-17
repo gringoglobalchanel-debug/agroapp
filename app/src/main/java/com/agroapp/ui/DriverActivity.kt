@@ -65,7 +65,6 @@ class DriverActivity : AppCompatActivity() {
 
     private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
 
-    // ✅ Referencias a botones y recyclers para poder cambiar tab desde cancelOrder
     private lateinit var btnAvailable: Button
     private lateinit var btnMyBlocks: Button
     private lateinit var rvAvailableBlocks: RecyclerView
@@ -319,10 +318,8 @@ class DriverActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Toast.makeText(this@DriverActivity, "Pedido cancelado y disponible de nuevo", Toast.LENGTH_LONG).show()
                         stopService(Intent(this@DriverActivity, DriverLocationService::class.java))
-                        // ✅ Recargar ambas listas
                         viewModel.loadMyPackages()
                         viewModel.loadAvailablePackages()
-                        // ✅ Cambiar tab a "Envios disponibles" automaticamente
                         rvAvailableBlocks.visibility = View.VISIBLE
                         rvMyBlocks.visibility = View.GONE
                         btnAvailable.setBackgroundColor(resources.getColor(R.color.green_700, theme))
@@ -337,10 +334,24 @@ class DriverActivity : AppCompatActivity() {
         }
     }
 
+    // ✅ OBSERVERS CON AGRUPACION POR ZONA
     private fun setupObservers() {
         viewModel.loading.observe(this, Observer { isLoading -> findViewById<ProgressBar>(R.id.progressBar).visibility = if (isLoading) View.VISIBLE else View.GONE })
-        viewModel.availablePackages.observe(this, Observer { packages -> if (packages != null) availablePackagesAdapter.submitList(packages) })
-        viewModel.myPackages.observe(this, Observer { packages -> if (packages != null) myPackagesAdapter.submitList(packages) })
+
+        viewModel.availablePackages.observe(this, Observer { packages ->
+            if (packages != null) {
+                val grouped = groupPackagesByZone(packages)
+                availablePackagesAdapter.submitList(grouped)
+            }
+        })
+
+        viewModel.myPackages.observe(this, Observer { packages ->
+            if (packages != null) {
+                val grouped = groupPackagesByZone(packages)
+                myPackagesAdapter.submitList(grouped)
+            }
+        })
+
         viewModel.packageEarnings.observe(this, Observer { earnings -> if (earnings != null) updateEarningsUI(earnings) })
         viewModel.takePackageState.observe(this, Observer { state ->
             when (state) {
@@ -350,6 +361,16 @@ class DriverActivity : AppCompatActivity() {
                 else -> {}
             }
         })
+    }
+
+    // ✅ Función para agrupar paquetes por zona (Norte → Centro → Sur → Sin zona)
+    private fun groupPackagesByZone(packages: List<DynamicPackage>): List<DynamicPackage> {
+        val norte = packages.filter { it.zone == "norte" }
+        val centro = packages.filter { it.zone == "centro" }
+        val sur = packages.filter { it.zone == "sur" }
+        val sinZona = packages.filter { it.zone.isNullOrEmpty() }
+
+        return norte + centro + sur + sinZona
     }
 
     private fun setupButtons() {

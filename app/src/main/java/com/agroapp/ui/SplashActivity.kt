@@ -1,4 +1,4 @@
-package com.agroapp.ui
+﻿package com.agroapp.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -64,8 +64,11 @@ class SplashActivity : AppCompatActivity() {
                 else                                   -> Intent(this, HomeActivity::class.java)
             }
         } else {
-            // ✅ Primera vez → Registro. Desde registro pueden ir al login
-            Intent(this, RegisterActivity::class.java)
+            // ✅ Si ya habia iniciado sesion antes va al login, si es primera vez va a registro
+            val hasBeenLoggedBefore = getSharedPreferences("agro_prefs", MODE_PRIVATE)
+                .getBoolean("has_logged_in", false)
+            if (hasBeenLoggedBefore) Intent(this, LoginActivity::class.java)
+            else Intent(this, RegisterActivity::class.java)
         }
 
         startActivity(intent)

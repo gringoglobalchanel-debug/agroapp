@@ -12,7 +12,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +31,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
+import kotlin.math.*
 
 class CartActivity : AppCompatActivity() {
 
@@ -92,20 +92,32 @@ class CartActivity : AppCompatActivity() {
         val btnTip5 = findViewById<Button>(R.id.btnTip5)
         val etCustomTip = findViewById<EditText>(R.id.etCustomTip)
         val btnApplyCustomTip = findViewById<Button>(R.id.btnApplyCustomTip)
-        val tvSeguirComprando = findViewById<TextView>(R.id.tvSeguirComprando)
-        val nestedScrollView = findViewById<NestedScrollView>(R.id.nestedScrollView)
         val layoutLocationSection = findViewById<LinearLayout>(R.id.layoutLocationSection)
-
-        tvSeguirComprando.setOnClickListener { startActivity(Intent(this, ProductsActivity::class.java)) }
 
         PaymentConfiguration.init(this, STRIPE_PUBLISHABLE_KEY)
         paymentSheet = PaymentSheet(this, ::onPaymentSheetResult)
 
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "Mi Carrito"
+        supportActionBar?.title = null  // Eliminar título "Mi Carrito"
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // ? Solo carga ubicación del mapa (delivery), NUNCA la dirección del perfil
+        // Agregar "Seguir comprando" en la toolbar, AL LADO DE LA FLECHA (izquierda)
+        val tvSeguirComprandoToolbar = TextView(this).apply {
+            text = "Seguir comprando"
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(this@CartActivity, android.R.color.white))
+            setPadding(32, 0, 0, 0)  // Espacio para que no se pegue a la flecha
+            setOnClickListener {
+                startActivity(Intent(this@CartActivity, ProductsActivity::class.java))
+            }
+        }
+        toolbar.addView(tvSeguirComprandoToolbar, Toolbar.LayoutParams(
+            Toolbar.LayoutParams.WRAP_CONTENT,
+            Toolbar.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
+        })
+
         val savedLat = SessionManager.getDeliveryLatitude()
         val savedLng = SessionManager.getDeliveryLongitude()
         val savedDeliveryAddress = SessionManager.getDeliveryAddress()
@@ -116,7 +128,6 @@ class CartActivity : AppCompatActivity() {
             tvDeliveryAddress.text = if (savedDeliveryAddress.isNotEmpty()) savedDeliveryAddress
             else "${"%.6f".format(savedLat)}, ${"%.6f".format(savedLng)}"
         } else {
-            // ? Sin ubicación del mapa: texto neutro, NO mostramos dirección del perfil
             tvDeliveryAddress.text = "Selecciona tu ubicación"
         }
 
@@ -184,24 +195,18 @@ class CartActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // ? Bug #3: Bloquear si no hay ubicación seleccionada en el mapa
             if (pendingLatitude == null || pendingLongitude == null) {
-                Toast.makeText(
-                    this,
-                    "? Selecciona tu ubicación de entrega antes de pagar",
-                    Toast.LENGTH_LONG
-                ).show()
-                nestedScrollView.post {
-                    nestedScrollView.smoothScrollTo(0, layoutLocationSection.top)
-                }
-                layoutLocationSection.setBackgroundColor(
-                    ContextCompat.getColor(this, android.R.color.holo_orange_light)
-                )
+                Toast.makeText(this, "Selecciona tu ubicación de entrega antes de pagar", Toast.LENGTH_LONG).show()
+                layoutLocationSection.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_orange_light))
                 layoutLocationSection.postDelayed({
-                    layoutLocationSection.setBackgroundColor(
-                        ContextCompat.getColor(this, R.color.green_50)
-                    )
+                    layoutLocationSection.setBackgroundColor(ContextCompat.getColor(this, R.color.green_50))
                 }, 1500)
+                return@setOnClickListener
+            }
+
+            // Validar si la ubicación está dentro de las zonas de entrega
+            if (!isLocationWithinDeliveryZones(pendingLatitude!!, pendingLongitude!!)) {
+                showOutOfZoneDialog()
                 return@setOnClickListener
             }
 
@@ -247,9 +252,57 @@ class CartActivity : AppCompatActivity() {
         })
     }
 
+    // ==================== VALIDACIÓN DE ZONAS DE ENTREGA ====================
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    }
+
+    private fun isLocationWithinDeliveryZones(latitude: Double, longitude: Double): Boolean {
+        val davidCenter = LatLng(8.4317, -82.4249)
+        val davidRadiusKm = 15.0
+        val islaColonCenter = LatLng(9.3508, -82.2572)
+        val islaColonRadiusKm = 15.0
+
+        val distanceToDavid = calculateDistance(latitude, longitude, davidCenter.lat, davidCenter.lng)
+        val distanceToIslaColon = calculateDistance(latitude, longitude, islaColonCenter.lat, islaColonCenter.lng)
+
+        return distanceToDavid <= davidRadiusKm || distanceToIslaColon <= islaColonRadiusKm
+    }
+
+    private fun showOutOfZoneDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_out_of_zone, null)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+
+        val btnEntendido = dialogView.findViewById<Button>(R.id.btnEntendido)
+        val btnCambiarUbicacion = dialogView.findViewById<Button>(R.id.btnCambiarUbicacion)
+
+        btnEntendido.setOnClickListener { dialog.dismiss() }
+        btnCambiarUbicacion.setOnClickListener {
+            dialog.dismiss()
+            val intent = Intent(this, MapsActivity::class.java)
+            pendingLatitude?.let { intent.putExtra("latitude", it) }
+            pendingLongitude?.let { intent.putExtra("longitude", it) }
+            mapLauncher.launch(intent)
+        }
+        dialog.show()
+    }
+
+    // ==================== FIN VALIDACIÓN ====================
+
     override fun onResume() {
         super.onResume()
-        // ? Solo carga ubicación del mapa, ignora dirección del perfil
         val savedLat = SessionManager.getDeliveryLatitude()
         val savedLng = SessionManager.getDeliveryLongitude()
         val savedDeliveryAddress = SessionManager.getDeliveryAddress()
@@ -340,8 +393,8 @@ class CartActivity : AppCompatActivity() {
         val context = this
         val container = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(android.graphics.Color.WHITE) }
         val header = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = android.view.Gravity.CENTER; setPadding(32, 48, 32, 32); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")) }
-        header.addView(TextView(context).apply { text = "YAPPI"; textSize = 28f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD })
-        header.addView(TextView(context).apply { text = "Pagar con YAPPI"; textSize = 22f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, 12, 0, 4) })
+        header.addView(TextView(context).apply { text = "YAPPY"; textSize = 28f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD })
+        header.addView(TextView(context).apply { text = "Pagar con Yappy"; textSize = 22f; setTextColor(android.graphics.Color.WHITE); gravity = android.view.Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD; setPadding(0, 12, 0, 4) })
         header.addView(TextView(context).apply { text = "Realiza tu transferencia y confirma"; textSize = 13f; setTextColor(android.graphics.Color.parseColor("#A5D6A7")); gravity = android.view.Gravity.CENTER })
         container.addView(header)
         val body = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 32, 32, 8) }
@@ -358,7 +411,7 @@ class CartActivity : AppCompatActivity() {
         body.addView(TextView(context).apply { text = "Tu pedido quedará en estado Esperando confirmación hasta que verifiquemos tu pago."; textSize = 12f; setTextColor(android.graphics.Color.parseColor("#E65100")); setPadding(0, 16, 0, 8) })
         container.addView(body)
         val btnContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 8, 32, 32) }
-        val btnOpenYappi = Button(context).apply { text = "Abrir YAPPI"; textSize = 15f; setTextColor(android.graphics.Color.WHITE); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }; setPadding(0, 16, 0, 16) }
+        val btnOpenYappi = Button(context).apply { text = "Abrir Yappy"; textSize = 15f; setTextColor(android.graphics.Color.WHITE); setBackgroundColor(android.graphics.Color.parseColor("#2E7D32")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }; setPadding(0, 16, 0, 16) }
         btnOpenYappi.setOnClickListener { openYappiApp(total) }
         val btnYaPague = Button(context).apply { text = "Ya realicé el pago"; textSize = 15f; setTextColor(android.graphics.Color.parseColor("#2E7D32")); setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9")); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 12 }; setPadding(0, 16, 0, 16) }
         val btnCancelar = Button(context).apply { text = "Cancelar"; textSize = 14f; setTextColor(android.graphics.Color.parseColor("#757575")); setBackgroundColor(android.graphics.Color.TRANSPARENT); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT); setPadding(0, 8, 0, 8) }
@@ -407,10 +460,33 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun openYappiApp(total: Double) {
-        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("yappi://pay?phone=$YAPPI_PHONE&amount=${"%.2f".format(total)}"))) }
-        catch (e: Exception) {
-            try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.banistmo.yappy"))) }
-            catch (ex: Exception) { Toast.makeText(this, "Descarga YAPPI desde la Play Store", Toast.LENGTH_LONG).show() }
+        val amount = "%.2f".format(total)
+        val phone = YAPPI_PHONE
+
+        val deepLinks = listOf(
+            "yappy://send?number=$phone&amount=$amount",
+            "yappy://pay?number=$phone&amount=$amount",
+            "com.banistmo.yappy://send?number=$phone&amount=$amount"
+        )
+
+        var opened = false
+        for (link in deepLinks) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    opened = true
+                    break
+                }
+            } catch (e: Exception) { }
+        }
+
+        if (!opened) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.banistmo.yappy")))
+            } catch (ex: Exception) {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.banistmo.yappy")))
+            }
         }
     }
 
@@ -445,4 +521,6 @@ class CartActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean { finish(); return true }
+
+    private data class LatLng(val lat: Double, val lng: Double)
 }

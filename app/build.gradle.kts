@@ -17,10 +17,10 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.agroapp"
+        applicationId = "com.grun.delivery"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        versionCode = 2
         versionName = "1.0"
 
         manifestPlaceholders["google_maps_key"] = "AIzaSyCQ87ZimfFtzExy8xWUsx0zmasOjC4BgUQ"

@@ -11,100 +11,140 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="#2E7D32"
-        android:title="Modo Repartidor"
-        android:titleTextColor="@android:color/white"
-        app:navigationIcon="@drawable/ic_back"
-        app:navigationIconTint="@android:color/white">
+        app:titleTextColor="#FFFFFF"
+        app:navigationIconTint="#FFFFFF"
+        app:navigationIcon="@drawable/ic_back" />
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivDriverProfileAvatar"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="end"
-            android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_default_avatar"
-            android:scaleType="centerCrop"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            app:shapeAppearanceOverlay="@style/CircleImageView" />
-
-    </androidx.appcompat.widget.Toolbar>
-
+    <!-- Header con avatar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@android:color/white"
-        android:elevation="2dp"
+        android:orientation="horizontal"
         android:padding="16dp"
-        android:layout_margin="12dp"
-        android:layout_marginTop="8dp">
+        android:background="#FFFFFF"
+        android:elevation="2dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ganancias esta semana"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#2E7D32"
-            android:layout_marginBottom="12dp" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivDriverProfileAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_default_avatar"
+            android:clickable="true"
+            android:focusable="true" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Total entregas:"
-                android:textSize="14sp"
-                android:textColor="#666666" />
-
-            <TextView
-                android:id="@+id/tvTotalDeliveries"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
+                android:text="Repartidor"
+                android:textSize="12sp"
+                android:textColor="#757575" />
+
+            <TextView
+                android:id="@+id/tvDriverName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cargando..."
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="#2E7D32" />
 
         </LinearLayout>
 
+    </LinearLayout>
+
+    <!-- Botones de navegación -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <Button
+            android:id="@+id/btnAvailableBlocks"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Envios disponibles"
+            android:backgroundTint="#2E7D32"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnMyBlocks"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Mis envios"
+            android:backgroundTint="#9E9E9E"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Lista de paquetes disponibles -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAvailableBlocks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:visibility="visible" />
+
+    <!-- Lista de mis paquetes -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvMyBlocks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:visibility="gone" />
+
+    <!-- Sección de ganancias -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp">
+
         <TextView
-            android:id="@+id/tvTotalTips"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Propinas: $0.00"
+            android:text="Ganancias esta semana"
             android:textSize="14sp"
-            android:textColor="#FF9800"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone" />
+            android:textStyle="bold"
+            android:textColor="#2E7D32" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginTop="8dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Ganancia neta:"
-                android:textSize="14sp"
-                android:textColor="#666666" />
+                android:text="Total:"
+                android:textSize="13sp"
+                android:textColor="#424242" />
 
             <TextView
                 android:id="@+id/tvThisWeekEarnings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="$0.00"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 android:textColor="#2E7D32" />
 
@@ -119,91 +159,57 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Proximo pago:"
-                android:textSize="12sp"
-                android:textColor="#999999" />
+                android:text="Pedidos entregados:"
+                android:textSize="13sp"
+                android:textColor="#424242" />
 
             <TextView
-                android:id="@+id/tvNextPaymentDate"
+                android:id="@+id/tvTotalDeliveries"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Viernes 27/03"
-                android:textSize="12sp"
-                android:textColor="#999999" />
+                android:text="0"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32" />
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvTotalTips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Propinas: $0.00"
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvNextPaymentDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Próximo pago: Viernes"
+            android:textSize="11sp"
+            android:textColor="#9E9E9E"
+            android:layout_marginTop="4dp" />
+
     </LinearLayout>
 
-    <LinearLayout
+    <!-- Botón logout -->
+    <Button
+        android:id="@+id/btnLogout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:weightSum="2">
-
-        <Button
-            android:id="@+id/btnAvailableBlocks"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:text="Envios Disponibles"
-            android:textSize="13sp"
-            android:backgroundTint="#2E7D32"
-            android:layout_marginEnd="4dp"
-            android:minHeight="48dp"
-            android:paddingHorizontal="4dp"
-            android:singleLine="true" />
-
-        <Button
-            android:id="@+id/btnMyBlocks"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:text="Mis Envios"
-            android:textSize="13sp"
-            android:backgroundTint="#9E9E9E"
-            android:layout_marginStart="4dp"
-            android:minHeight="48dp"
-            android:paddingHorizontal="4dp"
-            android:singleLine="true" />
-
-    </LinearLayout>
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
+        android:text="Cerrar sesión"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="24dp"
         android:visibility="gone" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvAvailableBlocks"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:visibility="visible"
-        android:clipToPadding="false"
-        android:padding="8dp" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvMyBlocks"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:visibility="gone"
-        android:clipToPadding="false"
-        android:padding="8dp" />
-
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="Cerrar Sesion"
-        android:textSize="14sp"
-        android:backgroundTint="#757575"
-        android:layout_margin="16dp"
-        android:minHeight="48dp" />
 
 </LinearLayout>

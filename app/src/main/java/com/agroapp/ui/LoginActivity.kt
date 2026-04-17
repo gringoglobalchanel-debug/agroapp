@@ -33,7 +33,6 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
         initViews()
         setupViewModel()
     }
@@ -46,21 +45,13 @@ class LoginActivity : AppCompatActivity() {
         tvDriverRegister = findViewById(R.id.tvDriverRegister)
         progressBar = findViewById(R.id.progressBar)
         tvError = findViewById(R.id.tvError)
-
         btnLogin.setOnClickListener { performLogin() }
-
-        tvRegister.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
-        }
-
-        tvDriverRegister.setOnClickListener {
-            startActivity(Intent(this, DriverRegisterActivity::class.java))
-        }
+        tvRegister.setOnClickListener { startActivity(Intent(this, RegisterActivity::class.java)) }
+        tvDriverRegister.setOnClickListener { startActivity(Intent(this, DriverRegisterActivity::class.java)) }
     }
 
     private fun setupViewModel() {
         viewModel = ViewModelProvider(this)[AuthViewModel::class.java]
-
         viewModel.authState.observe(this, Observer { state ->
             when (state) {
                 is AuthState.Loading -> {
@@ -71,27 +62,13 @@ class LoginActivity : AppCompatActivity() {
                 is AuthState.Success -> {
                     progressBar.visibility = View.GONE
                     btnLogin.isEnabled = true
-                    // ✅ Guardar bandera de que ya inicio sesion al menos una vez
-                    getSharedPreferences("agro_prefs", MODE_PRIVATE)
-                        .edit().putBoolean("has_logged_in", true).apply()
+                    getSharedPreferences("agro_prefs", MODE_PRIVATE).edit().putBoolean("has_logged_in", true).apply()
                     registerFcmToken()
                     when {
-                        state.role == "admin" -> {
-                            Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, AdminActivity::class.java))
-                        }
-                        state.role == "vendedor" -> {
-                            Toast.makeText(this, "Bienvenido Vendedor", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, VendorActivity::class.java))
-                        }
-                        state.userType == "driver" -> {
-                            Toast.makeText(this, "Bienvenido Repartidor", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, DriverActivity::class.java))
-                        }
-                        else -> {
-                            Toast.makeText(this, "Bienvenido ${state.name}", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this, HomeActivity::class.java))
-                        }
+                        state.role == "admin" -> { Toast.makeText(this, "Bienvenido Administrador", Toast.LENGTH_SHORT).show(); startActivity(Intent(this, AdminActivity::class.java)) }
+                        state.role == "vendedor" -> { Toast.makeText(this, "Bienvenido Vendedor", Toast.LENGTH_SHORT).show(); startActivity(Intent(this, VendorActivity::class.java)) }
+                        state.userType == "driver" -> { Toast.makeText(this, "Bienvenido Repartidor", Toast.LENGTH_SHORT).show(); startActivity(Intent(this, DriverActivity::class.java)) }
+                        else -> { Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show(); startActivity(Intent(this, HomeActivity::class.java)) }
                     }
                     finish()
                 }
@@ -101,10 +78,7 @@ class LoginActivity : AppCompatActivity() {
                     tvError.text = state.message
                     tvError.visibility = View.VISIBLE
                 }
-                else -> {
-                    progressBar.visibility = View.GONE
-                    btnLogin.isEnabled = true
-                }
+                else -> { progressBar.visibility = View.GONE; btnLogin.isEnabled = true }
             }
         })
     }
@@ -113,10 +87,7 @@ class LoginActivity : AppCompatActivity() {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { fcmToken ->
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    RetrofitClient.instance.registerFcmToken(
-                        token = SessionManager.getToken(),
-                        body = mapOf("fcm_token" to fcmToken)
-                    )
+                    RetrofitClient.instance.registerFcmToken(token = SessionManager.getToken(), body = mapOf("fcm_token" to fcmToken))
                 } catch (e: Exception) { }
             }
         }

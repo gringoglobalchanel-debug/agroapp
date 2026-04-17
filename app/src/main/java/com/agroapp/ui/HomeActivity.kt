@@ -244,7 +244,7 @@ class HomeActivity : AppCompatActivity() {
                 R.id.nav_orders -> startActivity(Intent(this, OrdersActivity::class.java))
                 R.id.nav_cart -> startActivity(Intent(this, CartActivity::class.java))
                 R.id.nav_logout -> { SessionManager.logout(); goToLogin() }
-                R.id.nav_settings -> Toast.makeText(this, "Proximamente", Toast.LENGTH_SHORT).show()
+                // ✅ nav_settings eliminado — ya no hace nada
             }
             drawerLayout.closeDrawer(GravityCompat.START, false)
             true
@@ -301,7 +301,10 @@ class HomeActivity : AppCompatActivity() {
     private fun setupActionButtons() {
         findViewById<LinearLayout>(R.id.llMisPedidos).setOnClickListener { startActivity(Intent(this, OrdersActivity::class.java)) }
         findViewById<LinearLayout>(R.id.llMercado).setOnClickListener { startActivity(Intent(this, ProductsActivity::class.java)) }
-        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener { Toast.makeText(this, "Proximamente...", Toast.LENGTH_SHORT).show() }
+        // ✅ Promociones abre PromotionsActivity con los banners
+        findViewById<LinearLayout>(R.id.llPromociones).setOnClickListener {
+            startActivity(Intent(this, PromotionsActivity::class.java))
+        }
     }
 
     private fun setupCategoryCards() {

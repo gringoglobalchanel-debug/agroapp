@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="24dp">
+
+    <!-- Título -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lo sentimos"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#2E7D32"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Línea decorativa -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="3dp"
+        android:background="#2E7D32"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Mensaje principal -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Por ahora solo entregamos en:"
+        android:textSize="14sp"
+        android:textColor="#424242"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Lista de zonas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#F5F5F5"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp"
+        android:radius="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• David, Chiriquí"
+            android:textSize="14sp"
+            android:textColor="#2E7D32"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="• Isla Colón, Bocas del Toro"
+            android:textSize="14sp"
+            android:textColor="#2E7D32"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Mensaje de esperanza -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pronto estaremos en tu ciudad"
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:textStyle="italic"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Botones -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnEntendido"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="Entendido"
+            android:backgroundTint="#9E9E9E"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnCambiarUbicacion"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Cambiar ubicación"
+            android:backgroundTint="#2E7D32"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</LinearLayout>
